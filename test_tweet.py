@@ -8,3 +8,5 @@ TOKEN = OAUTH_TOKEN
 TOKEN_SECRET = OAUTH_TOKEN_SECRET
 
 twitter = Twython(APP_KEY, APP_SECRET, TOKEN, TOKEN_SECRET)
+cred = twitter.verify_credentials()
+print(cred)
