@@ -1,22 +1,30 @@
 from tkinter import *
 from tkinter.ttk import *
+
 import ITwython
 import auth_gui
 
 
 # Structure d'après
 # https://stackoverflow.com/questions/17466561/best-way-to-structure-a-tkinter-application
+# Classe qui hérite de Frame
+
 class App(Frame):
     def __init__(self, parent):
-        # On définit le cadre dans l'objet App
-        Frame.__init__(self, parent)
+        # On définit le cadre dans l'objet App (inutile car pas kwargs**...)
+        # Frame.__init__(self, parent)
 
-        # On met en paramètre le parent et la connexion Twytho
+        # On met en paramètre le parent et la connexion Twython
         self.parent = parent
-        self.connec = ITwython.Connec()
 
         # TODO On vérifie si on doit créer une nouvelle connexion ou si on doit charger les tokens
-        auth_gui.fenetreconnexion()
+        auth_window = auth_gui.fenetreconnexion()
+
+        auth_window.grab_set()
+        principal.wait_window(auth_window)
+        # TODO Focus sur la fenêtre
+
+        self.connec = ITwython.Connec()
 
         # TODO Supprimer prototype pour envoyer tweets
         tw = StringVar()
@@ -29,13 +37,33 @@ class App(Frame):
         bouton.pack()
 
 
+# class Pri():
+#     def __init__(self):
+#         if True:
+#             gui = auth_gui.fenetreconnexion()
+#             gui.mainloop()
+#
+#     def maint(self):
+#         principal = Tk()
+#         principal.title("TwISN")
+#         principal.config(bg='white')
+#         # on ne travaille pas directement dans principal
+#         # mais on utilise un cadre (Objet App)
+#
+#
+#         App(principal).pack(side="top", fill="both", expand=True)
+#         principal.mainloop()
+
+
 # On commence le code ici
 if __name__ == "__main__":
     # Principal est la racine de l'app
     principal = Tk()
     principal.title("TwISN")
     principal.config(bg='white')
+
     # on ne travaille pas directement dans principal
-    # mais on utilise un cadre (Objet App
+    # mais on utilise un cadre (Objet App)
+
     App(principal).pack(side="top", fill="both", expand=True)
     principal.mainloop()

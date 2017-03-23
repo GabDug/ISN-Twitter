@@ -1,11 +1,14 @@
 from tkinter import *
 from tkinter.ttk import *
 
+import main_app
+
 
 # TODO Créer une fenêtre enfant à partir de main_app.
+
 def fenetreconnexion():
-    root = Tk()
-    root.title("Connexion")
+    root = Toplevel()
+    root.title("ISN Twitter - Connexion")
 
     style = Style()
     style.configure("BW.TLabel", foreground="white", background="#343232")
@@ -32,8 +35,7 @@ def fenetreconnexion():
     userentry = Entry(cadretexte, textvariable="user", style="A.BW.TLabel")
     passlabel = Label(cadretexte, text="Mot de passe : ", style="A.BW.TLabel")
     passentry = Entry(cadretexte, textvariable="password", show="*", style="A.BW.TLabel")
-
-    # TODO Bouton connexion
+    bouton = Button(cadretexte, text="Connexion")
 
     logo.grid(row=0, column=0, columnspan=2)
     titrelabel.grid(row=1, column=0, columnspan=2, pady=15)
@@ -41,13 +43,15 @@ def fenetreconnexion():
     userentry.grid(row=2, column=1, sticky="ew", padx=15)
     passlabel.grid(row=3, column=0, sticky="ew", padx=15)
     passentry.grid(row=3, column=1, sticky="ew", padx=15, pady=5)
+    bouton.grid(row=4, column=0, columnspan=2, sticky="ew")
 
     userentry.focus()
 
-    root.mainloop()
+    return root
 
 
 # Permet d'éxécuter le code uniquement si lancé
-# Pas chargé
+# Pour tester
 if __name__ == "__main__":
-    fenetreconnexion()
+    a = fenetreconnexion()
+    a.mainloop()
