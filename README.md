@@ -9,5 +9,9 @@ We used :
 - Tkinter
 - Twython: [Doc](https://twython.readthedocs.io), [Github](https://github.com/ryanmcgrath/twython)
 
+<<<<<<< HEAD
 ## License
+=======
+##License
+>>>>>>> master
 Please see the LICENSE.md file.

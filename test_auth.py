@@ -20,7 +20,6 @@ twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 
 final_step = twitter.get_authorized_tokens(oauth_verifier)
 
-# TODO Sauvegarder les jetons permanents pour se reconnecter,
-# Dans secrets.py ?
+# TODO Sauvegarder les jetons permanents pour se reconnecter, dans secrets.py ?
 
 print(final_step)
