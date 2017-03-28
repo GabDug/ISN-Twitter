@@ -4,10 +4,11 @@ import secrets
 
 def encode():
 #récupère tokens à partir de secrets et les crypte en b64 dans une liste
-    a = base64.encodestring(secrets.TWITTER_APP_KEY.encode('ascii'))
-    b = base64.encodestring(secrets.TWITTER_APP_SECRET.encode('ascii'))
-    c = base64.encodestring(secrets.OAUTH_TOKEN.encode('ascii'))
-    d = base64.encodestring(secrets.OAUTH_TOKEN_SECRET.encode('ascii'))
+    data = open('D:\Quentin\ISN-Twitter\secrets', 'r').readlines()
+    a = base64.encodestring(data[0].encode('ascii'))
+    b = base64.encodestring(data[1].encode('ascii'))
+    c = base64.encodestring(data[2].encode('ascii'))
+    d = base64.encodestring(data[3].encode('ascii'))
     encoded = [a,b,c,d]
     return encoded#liste
 
@@ -32,12 +33,14 @@ def gettoken(liste):
     return decoded#liste
 
 
-def settoken(liste):
-#remplace les usertokens par de nouveaux tokens dans la liste créée par encode
-    liste[2] = encoder('bite')
-    liste[3] = encoder(secrets.OAUTH_TOKEN_SECRET)
-
-
+def settoken():
+#permet de changer les valeurs des usertokens dans le fichier secrets
+    data = open('D:\Quentin\ISN-Twitter\secrets', 'r').readlines()
+    data[2] = str(input("OAUTH_TOKEN : "))+'\n'
+    data[3] = str(input("OAUTH_TOKEN_SECRET : "))+'\n'
+    out = open('D:\Quentin\ISN-Twitter\secrets', 'w')
+    out.writelines(data)
+    out.close()
 
 #les tests, tu peux décommenter si tu veux essayer :)
 '''
@@ -46,8 +49,10 @@ print(liste)
 gettoken(liste)#on décrypte la liste
 print(liste)
 liste = encode()#on réinitialise la liste (pour y voir plus clair)
-settoken(liste)#on change les usertokens (par bite)
+settoken()#on change les usertokens (par bite)
+liste = encode()
 print(liste)
 gettoken(liste)#on décrypte la nouvelle liste
-print(liste)#et la y a marqué bite c'est drôle :)
+print(liste)
 '''
+
