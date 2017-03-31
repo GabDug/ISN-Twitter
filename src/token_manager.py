@@ -13,11 +13,13 @@ chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + che
 
 
 def get_tokens() -> list:
-    """Renvoie les 4 tokens (app et usr) stockés dans un fichier, dans une liste :
-    TWITTER_APP_KEY, TWITTER_APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET"""
+    """
+    Renvoie les 4 tokens (app et usr) stockés dans un fichier, dans une liste :
+    TWITTER_APP_KEY, TWITTER_APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
+    """
     f = open(chemin_absolu, 'r')
     data = f.readlines()
-    decoded = decoder(data)
+    decoded = _decoder(data)
     f.close()
     return decoded
 
@@ -26,10 +28,12 @@ def get_tokens() -> list:
 def set_tokens(token1: str, token2: str) -> bool:
     """Permet de changer les tokens utilisateurs qui sont stockés dans un fichier."""
     # TODO utiliser une seule lecture/écriture du fichier
+    # TODO Utiliser with open pour ne pas à avoir à fermer le fichier (cf lien)
+    # http://python-guide-pt-br.readthedocs.io/en/latest/writing/style/#read-from-a-file
     f = open(chemin_absolu, 'r')
     data = f.readlines()
-    data[2] = encoder(token1)
-    data[3] = encoder(token2)
+    data[2] = _encoder(token1)
+    data[3] = _encoder(token2)
     f.close()
 
     fout = open(chemin_absolu, 'w')
@@ -46,13 +50,13 @@ def user_token_exist() -> bool:
     return True
 
 
-def encoder(texte: str) -> str:
-    # crypte les str par lequelles on va remplacer les usertokens
+# crypte les str par lequelles on va remplacer les usertokens
+def _encoder(texte: str) -> str:
     return (base64.encodebytes(texte.encode('ascii'))).decode('unicode_escape')
 
 
-def decoder(liste: list) -> list:
-    # décrypte chaque élément de la liste dans une nouvelle liste
+# décrypte chaque élément de la liste dans une nouvelle liste
+def _decoder(liste: list) -> list:
     # TODO Remplacer par une boucle
     liste[0] = (base64.decodebytes(liste[0].encode())).decode('unicode_escape')
     liste[1] = base64.decodebytes(liste[1].encode()).decode('unicode_escape')
