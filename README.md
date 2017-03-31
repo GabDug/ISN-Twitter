@@ -1,4 +1,4 @@
-#ISN Twitter
+# ISN Twitter
 Small project created for high school
 
 We aim to create a simple Twitter client, allowing user to perform basics Twitter actions such as tweeting or getting a

@@ -61,6 +61,8 @@ def decoder(liste: list) -> list:
     return liste
 
 
+# TODO Vérifier taille des listes, présence du fichier, population du fichier => empêcher toutes les erreurs
+
 # Tests
 if __name__ == "__main__":
     print(get_tokens())
