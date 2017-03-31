@@ -1,13 +1,11 @@
 from twython import *
+
 from src import token_manager
 
 # On récupère les différents tokens
-tokens = token_manager.get_tokens()
-
-APP_KEY = tokens[0]
-APP_SECRET = tokens[1]
-TOKEN = tokens[2]
-TOKEN_SECRET = tokens[3]
+# On est normalement assuré des 4 éléments donc on peux utiliser l'unpacking
+# http://python-guide-pt-br.readthedocs.io/en/latest/writing/style/#unpacking
+APP_KEY, APP_SECRET, TOKEN, TOKEN_SECRET = token_manager.get_tokens()
 
 
 class Connec:
@@ -32,7 +30,7 @@ class Connec:
         except TwythonError as e:
             print("Erreur: " + str(e))
         print(cred)
-        #Connec.debugrate(Connec.twitter)
+        # Connec.debugrate(Connec.twitter)
         # print("x-rate-limit-limit:" + Connec.twitter.get_lastfunction_header('x-rate-limit-limit'))
         # print("x-rate-limit-remaining: " + Connec.twitter.get_lastfunction_header('x-rate-limit-remaining'))
         # print("x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(
