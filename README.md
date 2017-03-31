@@ -9,9 +9,12 @@ We used :
 - Tkinter
 - Twython: [Doc](https://twython.readthedocs.io), [Github](https://github.com/ryanmcgrath/twython)
 
-<<<<<<< HEAD
+Supported platforms (as of march 2017) :
+- Windows (7+ 64bits)
+
+## Setup
+Put the tokens in a file "secrets", line by line.
+
 ## License
-=======
-##License
->>>>>>> master
+
 Please see the LICENSE.md file.

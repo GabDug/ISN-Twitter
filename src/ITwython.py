@@ -1,33 +1,38 @@
-import datetime
-
 from twython import *
+from src import token_manager
 
-from secrets import TWITTER_APP_KEY, TWITTER_APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
+# On récupère les différents tokens
+tokens = token_manager.get_tokens()
 
-APP_KEY = TWITTER_APP_KEY
-APP_SECRET = TWITTER_APP_SECRET
-TOKEN = OAUTH_TOKEN
-TOKEN_SECRET = OAUTH_TOKEN_SECRET
+APP_KEY = tokens[0]
+APP_SECRET = tokens[1]
+TOKEN = tokens[2]
+TOKEN_SECRET = tokens[3]
 
 
 class Connec:
-    twitter = Twython()
-
     def __init__(self):
-        Connec.twitter = Twython(APP_KEY, APP_SECRET, TOKEN, TOKEN_SECRET)
-        print(Connec.twitter)
-        print(Connec.twitter.verify_credentials())
-        Connec.debugrate(Connec.twitter)
+        print("DD")
+        self.twython = Twython(APP_KEY, APP_SECRET, TOKEN, TOKEN_SECRET)
+        # except AttributeError as e:
+        #     print("Erreur ! Connexion impossible!")
+        #     print(e)
+        #     self.twython = None
+        print("###CONNEXION###")
+        print(self.twython)
+        print(self.twython.verify_credentials())
+        print("###FIN###")
+        # Connec.debugrate(Connec.twitter)
 
-    @staticmethod
-    def tweeter(txt):
+    def tweeter(self, txt):
         print("Tweet...")
         try:
-            cred = Connec.twitter.update_status(status=txt)
+            cred = self.twython.update_status(status=txt)
+            print("B")
         except TwythonError as e:
             print("Erreur: " + str(e))
         print(cred)
-        Connec.debugrate(Connec.twitter)
+        #Connec.debugrate(Connec.twitter)
         # print("x-rate-limit-limit:" + Connec.twitter.get_lastfunction_header('x-rate-limit-limit'))
         # print("x-rate-limit-remaining: " + Connec.twitter.get_lastfunction_header('x-rate-limit-remaining'))
         # print("x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(
