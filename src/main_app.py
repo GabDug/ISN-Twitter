@@ -2,14 +2,21 @@ from tkinter import *
 from tkinter.ttk import *
 
 from src import ITwython
+from src import auth_gui
+from src import token_manager
 
-
-# import auth_gui
-# import token2 as token
 
 # Structure d'après
 # https://stackoverflow.com/questions/17466561/best-way-to-structure-a-tkinter-application
 # Classe qui hérite de Frame
+
+def final(connectemporaire, oauth_verifier):
+    login_credentials = connectemporaire.final(oauth_verifier)
+    user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
+    print("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
+    token_manager.set_tokens(user_token, user_token_secret)
+    print(token_manager.get_all_tokens())
+
 
 class App(Frame):
     def __init__(self, parent):
@@ -21,19 +28,27 @@ class App(Frame):
 
         # TODO On vérifie si on doit créer une nouvelle connexion ou si on doit charger les tokens
 
-        # # Si les tokens n'existe pas alors ouvrir fenêtre de connexion
-        # if not token.existe():
-        #     auth_window = auth_gui.fenetreconnexion()
-        #     auth_window.grab_set()
-        #     principal.wait_window(auth_window)
-        #
-        # # Sinon on les récupère simplement
-        # else:
-        #     tok = token.get_token()
+        # Tant que les tokens n'existent pas alors ouvrir fenêtre de connexion
+        if not token_manager.user_token_exist():
+            app_key, app_secret = token_manager.get_app_tokens()
+            connectemp = ITwython.ConnecTemporaire(app_key, app_secret)
+            auth_url = connectemp.auth_url
+
+            auth_window = auth_gui.FenetreConnexion(connectemp, auth_url).root
+            auth_window.grab_set()
+            principal.wait_window(auth_window)
+
+        # On récupère les différents tokens
+        # On est normalement assuré des 4 éléments donc on peux utiliser l'unpacking
+        # http://python-guide-pt-br.readthedocs.io/en/latest/writing/style/#unpacking
+        app_key, app_secret, user_key, user_secret = token_manager.get_all_tokens()
+        # Une fois qu'on a les tokens, créer la connexion
+        self.connec = ITwython.Connec(app_key, app_secret, user_key, user_secret)
+
         # TODO Focus sur la fenêtre
 
-        # self.connec = ITwython.Connec()
-        #
+
+
         # TODO Supprimer prototype pour envoyer tweets
         tw = StringVar()
 
