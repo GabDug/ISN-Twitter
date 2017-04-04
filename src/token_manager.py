@@ -82,7 +82,8 @@ def _encoder(texte: str) -> str:
 # décrypte chaque élément de la liste dans une nouvelle liste
 def _decoder(liste: list) -> list:
     # TODO Remplacer par une boucle
-    # TODO Ajouter mécanisme pour enlever les = (et les rajouter)
+    # TODO Ajouter mécanisme pour enlever les = (et les rajouter) voir lien :
+    # http://stackoverflow.com/questions/2941995/python-ignore-incorrect-padding-error-when-base64-decoding
     for i in range(len(liste)):
         liste[i] = (base64.decodebytes(liste[i].encode())).decode('unicode_escape')
     return liste
