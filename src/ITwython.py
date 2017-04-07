@@ -68,8 +68,8 @@ class Connec:
         """Affiche les infos sur les limites d'utilisation"""
         print("DebugRate...")
         # TODO Fix debugrate
-        #print(Connec.twitter)
-        #print(twi)
+        # print(Connec.twitter)
+        # print(twi)
         # print("x-rate-limit-limit:" + twi.get_lastfunction_header('x-rate-limit-limit'))
         # print("x-rate-limit-remaining: " + twi.get_lastfunction_header('x-rate-limit-remaining'))
         # print("x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(
