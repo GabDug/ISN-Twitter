@@ -1,6 +1,6 @@
 import os.path
+import tkinter as tk
 import webbrowser
-from tkinter import *
 from tkinter.ttk import *
 
 chemin_relatif = "/../assets/Twitter_Logo_Blue_Cropped.png"
@@ -9,12 +9,12 @@ chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + che
 
 class FenetreConnexion:
     def __init__(self, co_temporaire, auth_url, test=False):
-        self.root = Toplevel()
+        self.root = tk.Toplevel()
         self.root.title("Twysn - Connexion")
 
         self.connec_temporaire = co_temporaire
 
-        self.pin_variable = StringVar()
+        self.pin_variable = tk.StringVar()
         self.pin_link = auth_url
 
         self.test = test
@@ -29,11 +29,11 @@ class FenetreConnexion:
         cadre = Frame(fenetre, style="BW.TLabel")
         cadre.grid(row=0, column=0, padx=50, pady=50)
 
-        logophoto = PhotoImage(file=chemin_absolu)
+        logophoto = tk.PhotoImage(file=chemin_absolu)
         logo = Label(cadre, width=11, image=logophoto, style="BW.TLabel")
         logo.image = logophoto
 
-        cadretexte = Frame(cadre, relief=GROOVE, style="A.BW.TLabel")
+        cadretexte = Frame(cadre, relief=tk.GROOVE, style="A.BW.TLabel")
         cadretexte.grid(row=1, column=0, columnspan=2)
 
         titrelabel = Label(cadretexte, text="Cliquez ici pour vous connecter.", style="A.BW.TLabel")
@@ -50,6 +50,7 @@ class FenetreConnexion:
         titrelabel.bind("<Button-1>", lambda __: self.ouverture_lien())
         passentry.focus()
 
+    # TODO Ouvrir directement le lien sans faire cliquer
     def ouverture_lien(self):
         webbrowser.open_new(self.pin_link)
 
@@ -57,12 +58,13 @@ class FenetreConnexion:
         from main_app import final
         print("Pin var : " + str(self.pin_variable.get()))
         if not self.test:
-            final(self.connec_temporaire, self.pin_variable.get())
+            final(self.root, self.connec_temporaire, self.pin_variable.get())
+        self.root.destroy()
 
 
 # Permet d'éxécuter le code uniquement si lancé
 # Pour tester
 if __name__ == "__main__":
-    r = Tk()
+    r = tk.Tk()
     r = FenetreConnexion("", "<lien>", test=True)
     r.root.mainloop()

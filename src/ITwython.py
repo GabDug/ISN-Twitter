@@ -1,3 +1,5 @@
+import datetime
+
 from twython import *
 
 
@@ -41,37 +43,53 @@ class Connec:
         #     print("Erreur ! Connexion impossible!")
         #     print(e)
         #     self.twython = None
-        print("###CONNEXION###")
-        print(self.twython)
-        print(self.twython.verify_credentials())
-        print("###FIN###")
+        print("### CONNEXION ###")
+        print("     " + str(self.twython))
+        print("     " + str(self.twython.verify_credentials()))
+        self._debugrate()
+        print("### FIN ###")
         # Connec.debugrate(Connec.twitter)
 
-    def tweeter(self, txt):
-        print("Tweet...")
+    def tweeter(self, cadre_tweet, message_du_tweet):
+        print("Tweet:")
         try:
-            cred = self.twython.update_status(status=txt)
-            print("Success!")
-            print(cred)
+            cred = self.twython.update_status(status=message_du_tweet)
+            print("     Success!")
+            print("     " + str(cred))
+            self._debugrate()
+            cadre_tweet.callback(True, "Tweet envoyé !", cred)
+            return True, "Tweet envoyé !"
         except TwythonError as e:
-            print("Erreur: " + str(e))
+            print("     Erreur: " + str(e))
+            # On retourne dans main_app avec la fonction callback
+            cadre_tweet.callback(False, "Échec de l'envoi !" + str(e))
+            return False, "Erreur" + str(e)
+            # Connec.debugrate(Connec.twitter)
+            # print("x-rate-limit-limit:" + Connec.twitter.get_lastfunction_header('x-rate-limit-limit'))
+            # print("x-rate-limit-remaining: " + Connec.twitter.get_lastfunction_header('x-rate-limit-remaining'))
+            # print("x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(
+            #     Connec.twitter.get_lastfunction_header('x-rate-limit-reset')))))
+            # print("H: " + str(datetime.datetime.now()))
 
-        # Connec.debugrate(Connec.twitter)
-        # print("x-rate-limit-limit:" + Connec.twitter.get_lastfunction_header('x-rate-limit-limit'))
-        # print("x-rate-limit-remaining: " + Connec.twitter.get_lastfunction_header('x-rate-limit-remaining'))
-        # print("x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(
-        #     Connec.twitter.get_lastfunction_header('x-rate-limit-reset')))))
-        # print("H: " + str(datetime.datetime.now()))
-
-    @staticmethod
-    def debugrate(twi):
-        """Affiche les infos sur les limites d'utilisation"""
+    def _debugrate(self):
+        """Affiche les infos sur les limites d'utilisation dans la console"""
         print("DebugRate...")
-        # TODO Fix debugrate
-        # print(Connec.twitter)
-        # print(twi)
-        # print("x-rate-limit-limit:" + twi.get_lastfunction_header('x-rate-limit-limit'))
-        # print("x-rate-limit-remaining: " + twi.get_lastfunction_header('x-rate-limit-remaining'))
-        # print("x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(
-        #     twi.get_lastfunction_header('x-rate-limit-reset')))))
-        # print("H: " + str(datetime.datetime.now()))
+        # J'ai "fixé" la fonction qui ne fait plus crasher et est plus propre : elle fait tjr la même chose
+        print(self)
+        print(self.twython)
+
+        a = self.twython.get_lastfunction_header('x-rate-limit-limit')
+        b = self.twython.get_lastfunction_header('x-rate-limit-remaining')
+        c = self.twython.get_lastfunction_header('x-rate-limit-reset')
+        if a is not None:
+            print("x-rate-limit-limit:" + str(a))
+        if b is not None:
+            print("x-rate-limit-remaining: " + str(b))
+        if c is not None:
+            print("x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(c))))
+            print("H: " + str(datetime.datetime.now()))
+        if a is None and b is None and c is None:
+            print("No header provided")
+
+    def __repr__(self):
+        return "<Connec : {0}>".format(self.twython)
