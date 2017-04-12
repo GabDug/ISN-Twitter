@@ -1,10 +1,1 @@
-appdirs
-coverage
-modernize
-oauthlib
-packaging
-pyparsing
-requests
-requests-oauthlib
-six
-twython
+twython==3.4.0
