@@ -1,8 +1,11 @@
 import logging
+import threading
 import tkinter as tk
 from sys import stdout
+from tkinter import messagebox
 from tkinter.ttk import *
 
+import mttkinter as tk
 from src import ITwython
 from src import auth_gui
 from src import token_manager
@@ -76,33 +79,55 @@ class NouveauTweet(Frame):
         self.bouton.pack()
         self.message.pack()
 
+    # def switchstate(self):
+    #     logger.warning("SWITCH: START")
+    #     self.tweet.state(["!disabled"])
+    #     self.bouton.state(["!disabled"])
+    #     logger.warning("SWITCH: END")
+
     def tweeter(self):
+        # On récupère le message depuis le widget d'entrée de texte
         message = self.tweet_message.get()
-        self.tweet.state(["disabled"])
-        self.bouton.state(["disabled"])
-        print("Désactivé")
 
-        # définir une fonction là sert à rien pour le moment mais peut être plus atdr pour le multithreading
-        def action():
-            self.connec.tweeter(self, message)
+        def action_async():
+            logger.info("Entering action")
 
-            # self.message_resultat.set(msg__)
-            # print("A :" + str(bool__))
-            # print("B :" + str(msg__))
-            # self.tweet.state(["!disabled"])
-            # self.bouton.state(["!disabled"])
+            # On désactive l'entrée utilisateur pendant l'envoi du tweet
+            self.tweet.state(["disabled"])
+            self.bouton.state(["disabled"])
 
-        action()
-        # TODO Activer/désactiver marche pas
+            # On lance le tweet via ITwython
+            succes, msg = self.connec.tweeter(message)
 
-    # Executé après l'envoi
-    # __ c'est un paramètre plus utilisé que j'avais la flemme d'enlever
-    def callback(self, succes: bool, msg_, __=None):
-        print("Début callback")
-        self.message_resultat.set(msg_)
-        # self.tweet.state(["disabled"])
-        # self.bouton.state(["disabled"])
-        print("Réactivé")
+            logger.debug("succes : " + str(succes))
+            logger.debug("msg : " + str(msg))
+
+            # On lance les actions de retour
+            self.callback(succes, msg)
+            logger.warning("Action done")
+
+        # On lance l'action du tweet dans un thread asynchrone
+        th = threading.Thread(target=action_async)
+        th.start()
+
+    def callback(self, succes: bool, msg_):
+        """Éxecuté après l'envoi"""
+        logger.debug("Début callback")
+
+        # Si le tweet a bien été envoyé
+        if succes:
+            self.message_resultat.set(msg_)
+        # Si il y a eu une erreur
+        else:
+            messagebox.showerror(
+                "Impossible d'envoyer le tweet",
+                "Erreur : {0}".format(msg_)
+            )
+
+        # On réactive l'entrée utilisateur
+        self.tweet.state(["!disabled"])
+        self.bouton.state(["!disabled"])
+        logger.debug("Fin callback")
 
 
 # class Pri():
@@ -135,29 +160,22 @@ if __name__ == "__main__":
     ch = logging.StreamHandler(stdout)
     ch.setLevel(logging.DEBUG)
 
-    f = logging.FileHandler("twisn.log", mode="w", level=logging.DEBUG)
+    f = logging.FileHandler("twisn.log", mode="w")
     f.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(funcName)s in %(filename)s] : %(message)s")
-
+    formatter.datefmt = "%H:%M:%S"
     ch.setFormatter(formatter)
     f.setFormatter(formatter)
 
     logger.addHandler(ch)
     logger.addHandler(f)
 
-    # logging.basicConfig(filename='twisn.log', filemode='w',
-    #                     format="%(asctime)s [%(levelname)s]: %(message)s", datefmt="%H:%M:%S",
-    #                     level=logging.INFO)
-    # logging.debug('This message should go to the log file')
-    # logging.info('So should this')
-    # logging.warning('And this, too')
-    # logging.info("TWISN STARTED")
-    logger.debug('debug message')
-    logger.info('info message')
-    logger.warning('warn message')
-    logger.error('error message')
-    logger.critical('critical message')
+    # logger.debug('debug message')
+    # logger.info('info message')
+    # logger.warning('warn message')
+    # logger.error('error message')
+    # logger.critical('critical message')
 
     # Fin de la définition du logger
 

@@ -13,8 +13,10 @@ Supported platforms (as of march 2017) :
 - Windows (7+ 64bits)
 
 ## Setup
-Put the tokens in a file "secrets", line by line.
+Put the tokens in a file "secrets", as explained in the "secret_example" file
 
 ## License
 
-Please see the LICENSE.md file.
+- TwISN is distributed under the GNU AGPL license. Please see LICENSE.md. 
+- mttkinter is distributed under the GNU LGPL license.
+- TWITTER, TWEET, RETWEET and the Twitter logo are trademarks of Twitter, Inc. or its affiliates.

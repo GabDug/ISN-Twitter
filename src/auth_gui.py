@@ -2,6 +2,7 @@ import os.path
 import tkinter as tk
 import webbrowser
 from tkinter.ttk import *
+import logging
 
 chemin_relatif = "/../assets/Twitter_Logo_Blue_Cropped.png"
 chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
@@ -36,27 +37,27 @@ class FenetreConnexion:
         cadretexte = Frame(cadre, relief=tk.GROOVE, style="A.BW.TLabel")
         cadretexte.grid(row=1, column=0, columnspan=2)
 
-        titrelabel = Label(cadretexte, text="Cliquez ici pour vous connecter.", style="A.BW.TLabel")
-        passlabel = Label(cadretexte, text="Code connexion : ", style="A.BW.TLabel")
-        passentry = Entry(cadretexte, textvariable=self.pin_variable, style="A.BW.TLabel")
+        titrelabel = Label(cadretexte, text="Le code est présent sur la page qui vient de s'ouvrir.",
+                           style="A.BW.TLabel")
+        codelabel = Label(cadretexte, text="Code connexion : ", style="A.BW.TLabel")
+        codeentry = Entry(cadretexte, textvariable=self.pin_variable, style="A.BW.TLabel")
         bouton = Button(cadretexte, command=self.connexion, text="Connexion")
 
         logo.grid(row=0, column=0, columnspan=2)
         titrelabel.grid(row=1, column=0, columnspan=2, pady=15)
-        passlabel.grid(row=3, column=0, sticky="ew", padx=15)
-        passentry.grid(row=3, column=1, sticky="ew", padx=15, pady=5)
+        codelabel.grid(row=3, column=0, sticky="ew", padx=15)
+        codeentry.grid(row=3, column=1, sticky="ew", padx=15, pady=5)
         bouton.grid(row=4, column=0, columnspan=2, sticky="ew")
 
-        titrelabel.bind("<Button-1>", lambda __: self.ouverture_lien())
-        passentry.focus()
+        codeentry.focus()
+        self.ouverture_lien()
 
-    # TODO Ouvrir directement le lien sans faire cliquer
     def ouverture_lien(self):
         webbrowser.open_new(self.pin_link)
 
     def connexion(self):
         from main_app import final
-        print("Pin var : " + str(self.pin_variable.get()))
+        logging.debug("Input Pin = " + str(self.pin_variable.get()))
         if not self.test:
             final(self.root, self.connec_temporaire, self.pin_variable.get())
         self.root.destroy()

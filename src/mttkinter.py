@@ -56,6 +56,7 @@ Author: Allen B. Taylor, a.b.taylor@gmail.com
 '''
 
 import queue
+import threading
 from tkinter import *
 
 
@@ -66,7 +67,7 @@ class _Tk(object):
 
     def __init__(self, tk, mtDebug=0, mtCheckPeriod=10):
         self._tk = tk
-
+        print("MTT1")
         # Create the incoming event queue.
         self._eventQueue = queue.Queue(1)
 
