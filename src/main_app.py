@@ -52,10 +52,10 @@ class App(Frame):
 
     def ajout_widget(self):
         self.cadre_tweet = EnvoiTweet(self)
-        self.cadre_tweet.pack()
+        self.cadre_tweet.grid(column=0, row=0)
 
         self.tl = TimeLine(self)
-        self.tl.pack()
+        self.tl.grid(column=1, row=0)
 
 
 class EnvoiTweet(Frame):
@@ -135,14 +135,6 @@ class Tweet(Frame):
         Frame.__init__(self, parent)
         self.parent = parent
         # self.connec = parent.connec
-        print(screen_name)
-        print(name)
-        print(status)
-        print(date)
-        repr(screen_name)
-        repr(name)
-        repr(status)
-        repr(date)
 
         # On met en place le cadre du tweet
         self.tweet_message = tk.StringVar()
