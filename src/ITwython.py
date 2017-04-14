@@ -1,6 +1,7 @@
 import datetime
 
 from twython import *
+from twython import TwythonStreamer
 
 
 class ConnecTemporaire:
@@ -59,6 +60,7 @@ class Connec:
             print("Erreur envoi tweet : " + str(e))
             return False, str(e)
 
+    # Underscore au début du nom -> convention pour fonction interne
     def _debugrate(self):
         """Affiche les infos sur les limites d'utilisation dans la console"""
         # J'ai "fixé" la fonction qui ne fait plus crasher et est plus propre : elle fait tjr la même chose
@@ -79,3 +81,25 @@ class Connec:
 
     def __repr__(self):
         return "<Connec : {0}>".format(self.twython)
+
+
+class MyStreamer(TwythonStreamer):
+    from main_app import TimeLine
+
+    def __init__(self, app_key: str, app_secret: str, oauth_token: str, oauth_token_secret: str, timeline: TimeLine):
+        TwythonStreamer.__init__(self, app_key, app_secret, oauth_token, oauth_token_secret)
+        # On garde l'objet timeline pour pouvoir renvoyer les tweets à cet objet
+        self.timeline = timeline
+
+    def on_success(self, data):
+        print(data)
+        if 'text' in data:
+            print(data["user"]["screen_name"], data["user"]["name"], data['text'], data["created_at"])
+        self.timeline.add_data(data)
+
+    def on_error(self, status_code, data):
+        print(status_code)
+
+        # Want to stop trying to get data because of the error?
+        # Uncomment the next line!
+        # self.disconnect()
