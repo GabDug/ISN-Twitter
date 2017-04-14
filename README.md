@@ -1,4 +1,4 @@
-#ISN Twitter
+# ISN Twitter
 Small project created for high school
 
 We aim to create a simple Twitter client, allowing user to perform basics Twitter actions such as tweeting or getting a
@@ -9,9 +9,12 @@ We used :
 - Tkinter
 - Twython: [Doc](https://twython.readthedocs.io), [Github](https://github.com/ryanmcgrath/twython)
 
-<<<<<<< HEAD
+Supported platforms (as of march 2017) :
+- Windows (7+ 64bits)
+
+## Setup
+Put the tokens in a file "secrets", line by line.
+
 ## License
-=======
-##License
->>>>>>> master
+
 Please see the LICENSE.md file.
