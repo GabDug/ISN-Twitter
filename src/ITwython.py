@@ -84,17 +84,16 @@ class Connec:
 
 
 class MyStreamer(TwythonStreamer):
-    from main_app import TimeLine
-
-    def __init__(self, app_key: str, app_secret: str, oauth_token: str, oauth_token_secret: str, timeline: TimeLine):
-        TwythonStreamer.__init__(self, app_key, app_secret, oauth_token, oauth_token_secret)
+    def __init__(self, timeline, *args, **kwargs):
+        TwythonStreamer.__init__(self, *args, **kwargs)
         # On garde l'objet timeline pour pouvoir renvoyer les tweets à cet objet
         self.timeline = timeline
 
     def on_success(self, data):
         print(data)
         if 'text' in data:
-            print(data["user"]["screen_name"], data["user"]["name"], data['text'], data["created_at"])
+            print(data["user"]["screen_name"].encode("utf-8"), data["user"]["name"].encode("utf-8"),
+                  data['text'].encode("utf-8"), data["created_at"].encode("utf-8"))
         self.timeline.add_data(data)
 
     def on_error(self, status_code, data):
