@@ -37,7 +37,7 @@ def get_app_tokens() -> list:
             for i in range(2):
                 l.append(f.readline())
             decoded = _decoder(l)
-    except IOError:
+    except IOError as e:
         print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
     return decoded
 
@@ -131,4 +131,3 @@ if __name__ == "__main__":
     b = input("Token 1 :")
     set_tokens(a, b)
     print(get_all_tokens())
-    print(compterligne())

@@ -1,11 +1,10 @@
 import logging
 import threading
 import tkinter as tk
-
 from sys import stdout
 from tkinter import *
-from tkinter.ttk import *
 from tkinter import messagebox
+from tkinter.ttk import *
 
 import mttkinter as tk
 from src import ITwython
@@ -213,7 +212,6 @@ class TimeLine(Frame):
         # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
         thread_tl = threading.Thread(target=async_stream, daemon=True)
         thread_tl.start()
-
 
         # À utiliser pour debuguer, il faut commenter tout ce qui est async et connexion
         # self.peupler()
