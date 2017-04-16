@@ -23,19 +23,19 @@ class ConnecTemporaire:
 
     def final(self, oauth_verifier):
         # On demande des jetons permanents avec les jetons temporaires et le code PIN
-        print("u" + self.user_token)
-        print("s" + self.user_secret)
-        print(self.app_token)
-        print(self.app_secret)
-        print("AH")
+        print(" User token : " + self.user_token)
+        print(" User secret token : " + self.user_secret)
+        print(" App token : " + self.app_token)
+        print(" App token : " + self.app_secret)
         co = Twython(self.app_token, self.app_secret, self.user_token, self.user_secret)
 
-        final_step = co.get_authorized_tokens(oauth_verifier)
-
-        print(final_step)
-
-        return final_step
-
+        try:
+            final_step = co.get_authorized_tokens(oauth_verifier)
+            print(final_step)
+            return True, final_step
+        except TwythonError as e:
+            print(e)
+            return False, str(e)
 
 class Connec:
     def __init__(self, app_key, app_secret, user_key, user_secret):

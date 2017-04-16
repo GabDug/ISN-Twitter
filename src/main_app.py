@@ -20,28 +20,41 @@ from src import token_manager
 # Classe qui hérite de Frame
 
 def final(fenetre, connectemporaire, oauth_verifier):
-    login_credentials = connectemporaire.final(oauth_verifier)
-    user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
-    print("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
-    token_manager.set_tokens(user_token, user_token_secret)
-    print(token_manager.get_all_tokens())
-    fenetre.destroy()
+    succes, login_credentials = connectemporaire.final(oauth_verifier)
+    if succes:
+        user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
+        print("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
+        token_manager.set_tokens(user_token, user_token_secret)
+        print(token_manager.get_all_tokens())
+        fenetre.destroy()
+    else:
+        # TODO Voir
+        print("Erreur à gérer")
 
 
 class App(Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, stream=True):
         # On définit le cadre dans l'objet App (inutile car pas kwargs**...)
         Frame.__init__(self, parent)
         self.parent = parent
         self.parent.lift()
 
+        self.stream = stream
+
+        style = Style()
+        style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TEntry", foreground="black", background="#343232", font=('Segoe UI', 10))
+        style.configure("TButton", font=('Segoe UI', 10))
+
         # Tant que les tokens n'existent pas alors ouvrir fenêtre de connexion
         if not token_manager.user_token_exist():
+            logger.warning("User token does not exist !")
             app_key, app_secret = token_manager.get_app_tokens()
             connectemp = ITwython.ConnecTemporaire(app_key, app_secret)
             auth_url = connectemp.auth_url
 
-            auth_window = auth_gui.FenetreConnexion(connectemp, auth_url).root
+            auth_window = auth_gui.FenetreConnexion(self, connectemp, auth_url)
             auth_window.grab_set()
             principal.wait_window(auth_window)
 
@@ -58,7 +71,7 @@ class App(Frame):
         self.cadre_tweet = EnvoiTweet(self)
         self.cadre_tweet.grid(column=0, row=0)
 
-        self.tl = TimeLine(self)
+        self.tl = TimeLine(self, online=self.stream)
         self.tl.grid(column=1, row=0)
 
 
@@ -179,11 +192,12 @@ class Tweet(Frame):
 
 
 class TimeLine(Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, online=True):
         print("Initialisation cadre : timeline")
         Frame.__init__(self, parent)
         self.parent = parent
 
+        self.online = online
         # J'ai mis le canvas en bleu pour bien voir là où il est : on est pas censé le voir mais juste le frame
         # On utilise un frame dans un canvas car pas de scrollbar sur le frame => scrollbar sur canvas
         self.canvas = Canvas(self, borderwidth=0, width=210, background="blue")
@@ -199,22 +213,23 @@ class TimeLine(Frame):
         self.frame.bind("<Configure>", self.onFrameConfigure)
 
         self.ligne = 0
-
-        self.streamer = ITwython.MyStreamer(self, parent.app_key, parent.app_secret,
+        if online:
+            self.streamer = ITwython.MyStreamer(self, parent.app_key, parent.app_secret,
                                             parent.user_key, parent.user_secret)
 
-        def async_stream():
-            # On utilise une autre notation que with="followings" car with est un mot clé réservé de python
-            # Sinon on doit modifier le fichier helper de la librairie twython => hack sale
-            # On utilise un unpacking avec double splat http://deusyss.developpez.com/tutoriels/Python/args_kwargs/
-            self.streamer.user(**{"with": "followings"})
+            def async_stream():
+                # On utilise une autre notation que with="followings" car with est un mot clé réservé de python
+                # Sinon on doit modifier le fichier helper de la librairie twython => hack sale
+                # On utilise un unpacking avec double splat http://deusyss.developpez.com/tutoriels/Python/args_kwargs/
+                self.streamer.user(**{"with": "followings"})
 
-        # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
-        thread_tl = threading.Thread(target=async_stream, daemon=True)
-        thread_tl.start()
+            # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
+            thread_tl = threading.Thread(target=async_stream, daemon=True)
+            thread_tl.start()
 
         # À utiliser pour debuguer, il faut commenter tout ce qui est async et connexion
-        # self.peupler()
+        else:
+            self.peupler()
 
     def peupler(self):
         """Ajoute de fausses données pour travailler sur la mise en page hors-ligne,"
@@ -313,6 +328,7 @@ if __name__ == "__main__":
     # on ne travaille pas directement dans principal
     # mais on utilise un cadre (Objet App)
 
-    App(principal).grid(sticky="nsew")
+    app = App(principal, stream=True)
+    app.grid(sticky="nsew")
     principal.mainloop()
     logging.info("TWISN CLOSED")
