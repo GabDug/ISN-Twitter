@@ -1,5 +1,9 @@
 import base64
 import os.path
+import sys
+
+import logger_conf
+logger = logger_conf.Log.logger
 
 # ATTENTION!
 # Ne pas appeler le module "token" car ça override le module token de python et crée des erreurs
@@ -8,8 +12,20 @@ import os.path
 # TODO Vérifier sur d'autres OS
 # Code nécessaire car le chemin était différent si lancé depuis token_manager
 # ou depuis main_app avec l'ancienne implantation
-chemin_relatif = "/../data/secrets"
-chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
+
+if getattr(sys, 'frozen', False):
+    # The application is frozen
+    datadir = os.path.dirname(sys.executable)
+    chemin_relatif = "secrets"
+    chemin_absolu = os.path.abspath(os.path.dirname(sys.executable) + "/" + chemin_relatif)
+    logger.info("Twysn is frozen, secret file : " + chemin_absolu)
+
+else:
+    # The application is not frozen
+    # Change this bit to match where you store your data files:
+    chemin_relatif = "/../data/secrets"
+    chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
+    logger.info("Twysn isn't frozen, secret file : " + chemin_absolu)
 
 
 def get_all_tokens() -> list:
@@ -37,9 +53,9 @@ def get_app_tokens() -> list:
             for i in range(2):
                 l.append(f.readline())
             decoded = _decoder(l)
+        return decoded
     except IOError as e:
         print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return decoded
 
 
 # On spécifie que les arguments sont des str et que la fonction renvoie un bool

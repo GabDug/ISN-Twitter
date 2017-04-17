@@ -1,8 +1,10 @@
-import logging
 import os.path
 import tkinter as tk
 import webbrowser
 from tkinter.ttk import *
+
+import logger_conf
+logger = logger_conf.Log.logger
 
 chemin_relatif = "/../assets/Twitter_Logo_Blue_Cropped.png"
 chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
@@ -71,7 +73,7 @@ class FenetreConnexion(tk.Toplevel):
 
     def connexion(self):
         from main_app import final
-        logging.debug("Input Pin = " + str(self.pin_variable.get()))
+        logger.debug("Input Pin = " + str(self.pin_variable.get()))
         if not self.test:
             final(self.parent, self.connec_temporaire, self.pin_variable.get())
         self.parent.destroy()

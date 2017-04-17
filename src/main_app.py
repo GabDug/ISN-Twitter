@@ -1,20 +1,18 @@
 import logging
 import threading
 import tkinter as tk
-from sys import stdout
 from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import *
 
+import ITwython
+import auth_gui
 import mttkinter as tk
+import token_manager
 from ITwython import Tweet
-from src import ITwython
-from src import auth_gui
-from src import token_manager
 
-
-# from tkinter.ttk import *
-
+import logger_conf
+logger = logger_conf.Log.logger
 
 
 # TODO déplacer final dans App en staticmethod
@@ -58,7 +56,10 @@ class App(Frame):
         # Tant que les tokens n'existent pas alors ouvrir fenêtre de connexion
         if not token_manager.user_token_exist():
             logger.warning("User token does not exist !")
-            app_key, app_secret = token_manager.get_app_tokens()
+            try:
+                app_key, app_secret = token_manager.get_app_tokens()
+            except TypeError:
+                logger.debug("Oups")
             connectemp = ITwython.ConnecTemporaire(app_key, app_secret)
             auth_url = connectemp.auth_url
 
@@ -308,34 +309,14 @@ class TimeLine(Frame):
 
     def config_cadre(self, event):
         """Reset the scroll region to encompass the inner frame."""
-        print(event)
+        logger.debug(event)
         logger.debug("OnFrameConfigurate.")
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
 # On commence le code ici
 if __name__ == "__main__":
-    # On crée un logger : c'est pour gérer les logs de l'application
-    # Je vais essayer de remplacer tous les logger.debug() par des logger.info() ou logger.warning() etc
-    # Ca permet plus de clarté (ce qui est normal ou pas...) et de mettre dans un fichier
-    # Ca permet aussi d'avoir le moment précis de tel ou tel message pour savoir où on en est dans le code (pratique!)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-
-    ch = logging.StreamHandler(stdout)
-    ch.setLevel(logging.DEBUG)
-
-    f = logging.FileHandler("twisn.log", mode="w")
-    f.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(funcName)s in %(filename)s] : %(message)s")
-    formatter.datefmt = "%H:%M:%S"
-    ch.setFormatter(formatter)
-    f.setFormatter(formatter)
-
-    logger.addHandler(ch)
-    logger.addHandler(f)
-    # Fin de la définition du logger
+    logger.info("Starting Twysn")
 
     # Principal est la racine de l'app
     principal = tk.Tk()
@@ -347,4 +328,4 @@ if __name__ == "__main__":
     app = App(principal, stream_connection=False, static_connection=True)
     app.grid(sticky="nsew")
     principal.mainloop()
-    logging.info("TWISN CLOSED")
+    logger.info("TWISN CLOSED")

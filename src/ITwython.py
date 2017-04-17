@@ -3,6 +3,9 @@ import datetime
 from twython import *
 from twython import TwythonStreamer
 
+import logger_conf
+logger = logger_conf.Log.logger
+
 # Modèles
 class User:
     def __init__(self, data, *args, **kwargs):
@@ -29,8 +32,8 @@ class ConnecTemporaire:
     def __init__(self, _app_token, _app_secret):
         self.app_token = _app_token
         self.app_secret = _app_secret
-        print(self.app_token)
-        print(self.app_secret)
+        logger.debug(self.app_token)
+        logger.debug(self.app_secret)
 
         self.connection = Twython(self.app_token, self.app_secret)
         auth = self.connection.get_authentication_tokens()
@@ -38,24 +41,24 @@ class ConnecTemporaire:
 
         self.user_token = auth['oauth_token']
         self.user_secret = auth['oauth_token_secret']
-        print(self.user_token)
-        print(self.user_secret)
+        logger.debug(self.user_token)
+        logger.debug(self.user_secret)
         self.auth_url = auth['auth_url']
 
     def final(self, oauth_verifier):
         # On demande des jetons permanents avec les jetons temporaires et le code PIN
-        print(" User token : " + self.user_token)
-        print(" User secret token : " + self.user_secret)
-        print(" App token : " + self.app_token)
-        print(" App token : " + self.app_secret)
+        logger.debug(" User token : " + self.user_token)
+        logger.debug(" User secret token : " + self.user_secret)
+        logger.debug(" App token : " + self.app_token)
+        logger.debug(" App token : " + self.app_secret)
         co = Twython(self.app_token, self.app_secret, self.user_token, self.user_secret)
 
         try:
             final_step = co.get_authorized_tokens(oauth_verifier)
-            print(final_step)
+            logger.debug(final_step)
             return True, final_step
         except TwythonError as e:
-            print(e)
+            logger.debug(e)
             return False, str(e)
 
 
@@ -65,44 +68,44 @@ class Connec(Twython):
         # TODO Mettre try/except ?
         self.twython = self
         # except AttributeError as e:
-        #     print("Erreur ! Connexion impossible!")
-        #     print(e)
+        #     logger.debug("Erreur ! Connexion impossible!")
+        #     logger.debug(e)
         #     self.twython = None
-        print("     " + str(self))
+        logger.debug("     " + str(self))
         cred = self.verify_credentials()
-        print("     " + str(cred))
+        logger.debug("     " + str(cred))
         self.user = User(cred)
         self._debugrate()
 
     def tweeter(self, message_du_tweet):
         try:
             cred = self.update_status(status=message_du_tweet)
-            print("TweetGUI envoyé : " + str(cred))
+            logger.debug("TweetGUI envoyé : " + str(cred))
             self._debugrate()
             return True, "TweetGUI envoyé !"
 
         except TwythonError as e:
-            print("Erreur envoi tweet : " + str(e))
+            logger.debug("Erreur envoi tweet : " + str(e))
             return False, str(e)
 
     # Underscore au début du nom -> convention pour fonction interne
     def _debugrate(self):
         """Affiche les infos sur les limites d'utilisation dans la console"""
         # J'ai "fixé" la fonction qui ne fait plus crasher et est plus propre : elle fait tjr la même chose
-        print("Debugrate :\n  " + repr(self))
+        logger.debug("Debugrate :\n  " + repr(self))
 
         a = self.get_lastfunction_header('x-rate-limit-limit')
         b = self.get_lastfunction_header('x-rate-limit-remaining')
         c = self.get_lastfunction_header('x-rate-limit-reset')
         if a is not None:
-            print("  x-rate-limit-limit:" + str(a))
+            logger.debug("  x-rate-limit-limit:" + str(a))
         if b is not None:
-            print("  x-rate-limit-remaining: " + str(b))
+            logger.debug("  x-rate-limit-remaining: " + str(b))
         if c is not None:
-            print("  x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(c))))
-            print("  H: " + str(datetime.datetime.now()))
+            logger.debug("  x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(c))))
+            logger.debug("  H: " + str(datetime.datetime.now()))
         if a is None and b is None and c is None:
-            print("  No header provided")
+            logger.debug("  No header provided")
 
     # def __repr__(self):
     #     return "<Connec : {0}>".format(self)
@@ -115,14 +118,14 @@ class MyStreamer(TwythonStreamer):
         self.timeline = timeline
 
     def on_success(self, data):
-        print(data)
+        logger.debug(data)
         if 'text' in data:
-            print(data["user"]["screen_name"].encode("utf-8"), data["user"]["name"].encode("utf-8"),
+            logger.debug(data["user"]["screen_name"].encode("utf-8"), data["user"]["name"].encode("utf-8"),
                   data['text'].encode("utf-8"), data["created_at"].encode("utf-8"))
         self.timeline.add_data(data)
 
     def on_error(self, status_code, data):
-        print(status_code)
+        logger.debug(status_code)
 
         # Want to stop trying to get data because of the error?
         # Uncomment the next line!
