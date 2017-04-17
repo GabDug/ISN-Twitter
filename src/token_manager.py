@@ -3,6 +3,7 @@ import os.path
 import sys
 
 import logger_conf
+
 logger = logger_conf.Log.logger
 
 # ATTENTION!
@@ -36,10 +37,11 @@ def get_all_tokens() -> list:
     try:
         with open(chemin_absolu, 'r') as f:
             data = f.readlines()
-            decoded = _decoder(data)
+            decoded = _decoder_liste(data)
+            return decoded
     except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return decoded
+        logger.error("Erreur ! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
+        return
 
 
 def get_app_tokens() -> list:
@@ -52,11 +54,11 @@ def get_app_tokens() -> list:
             l = []
             for i in range(2):
                 l.append(f.readline())
-            decoded = _decoder(l)
+            decoded = _decoder_liste(l)
         return decoded
     except IOError as e:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-
+        logger.error("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
+        return
 
 # On spécifie que les arguments sont des str et que la fonction renvoie un bool
 def set_tokens(token1: str, token2: str) -> bool:
@@ -67,19 +69,20 @@ def set_tokens(token1: str, token2: str) -> bool:
             if len(data) == 4:
                 data[2] = _encoder(token1)
                 data[3] = _encoder(token2)
-                # print(data)
+                # logger.debug(data)
             elif len(data) == 2:
                 data.append(_encoder(token1))
                 data.append(_encoder(token2))
-                # print(data)
+                # logger.debug(data)
             else:
-                print("WARNING ! TOKEN FILE NOT SUPPORTED ! ")
+                logger.debug("WARNING ! TOKEN FILE NOT SUPPORTED ! ")
             f.truncate(0)  # on efface le contenu du fichier
             f.writelines(data)  # puis on ecrit le nouveau contenu
+            return True
     except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return True
-
+        logger.debug("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
+        return False
+    return False
 
 def user_token_exist() -> bool:
     """Renvoie True si les tokens app et usr sont sauvegardés."""
@@ -91,26 +94,36 @@ def user_token_exist() -> bool:
             elif len(data) == 4:
                 return True
     except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-
+        logger.debug("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
+        return False
+    return False
 
 # crypte les str par lequelles on va remplacer les usertokens
 def _encoder(texte: str) -> str:
     encoded = (base64.encodebytes(texte.encode('ascii'))).decode('unicode_escape')
+    encoded = encoded.replace("=", "")
     return encoded
 
+
+def _decoder_string(element: str) -> str:
+    element = element.replace('\n', '').replace('\r', '')
+    missing_padding = 4 - ((len(element)) % 4)
+    if missing_padding != 0:
+        element += '=' * missing_padding
+
+    element = (base64.decodebytes(element.encode())).decode('unicode_escape')
+    return element
+
+
 # décrypte chaque élément de la liste dans une nouvelle liste
-def _decoder(liste: list) -> list:
-    # TODO Ajouter mécanisme pour enlever les = (et les rajouter) voir lien :
+def _decoder_liste(liste: list) -> list:
+    """Décode une liste de strings en base 64."""
     # http://stackoverflow.com/questions/2941995/python-ignore-incorrect-padding-error-when-base64-decoding
-    for i in range(len(liste)):
-        missing_padding = len(liste[i]) % 4 #on regarde si c'est un multiple de 4
-        if missing_padding == 3:
-            liste[i] += 'A=='
-        elif missing_padding == 1 or missing_padding == 2:
-            liste[i] += '=' * missing_padding
-        liste[i] = (base64.decodebytes(liste[i].encode())).decode('unicode_escape')
-    return liste
+    resultat = []
+    for element in liste:
+        resultat.append(_decoder_string(element))
+    return resultat
+
 
 def _set_app_tokens(token1: str, token2: str) -> bool:
     """Permet de changer les tokens app qui sont stockés dans un fichier. Maintenance uniquement"""
@@ -122,7 +135,7 @@ def _set_app_tokens(token1: str, token2: str) -> bool:
             f.truncate(0)  # on efface le contenu du fichier
             f.writelines(data)  # puis on ecrit le nouveau contenu
     except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
+        logger.debug("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
     return True
 
 
@@ -132,26 +145,17 @@ def _compterligne():
             nb_ligne = 0
             for line in f:
                 nb_ligne += 1
+            return nb_ligne
     except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return nb_ligne
+        logger.debug("Erreur! Le fichier n'a pas pu être ouvert !")  # on verifie si le fichier existe
+        return
 
-
-##    missing_padding = len(liste) % 4 #on regarde si c'est un multiple de 4
-##    if missing_padding != 0:
-##        liste[i] += b'='* (4 - missing_padding) #si non alors on ajoute des '=' pour quil le devienne
-##    idée pour les '=' a ajouter/retirer, ne fonctionne pas, message d'erreur :
-##    TypeError: Can't convert 'bytes' object to str implicitly
-##missing_padding = len(liste) % 4 #on regarde si c'est un multiple de 4
-##if missing_padding == 3:
-##    data += b'A=='
-##elif missing_padding == 1or missing_padding == 2:
-##    data += b'=' * missing_padding 
 
 # Tests
 if __name__ == "__main__":
-    print(get_all_tokens())
+    logger.info(get_all_tokens())
     a = input("Token 0 :")
     b = input("Token 1 :")
-    set_tokens(a, b)
-    print(get_all_tokens())
+    _set_app_tokens(a, b)
+    # set_tokens(a,b)
+    logger.info(get_all_tokens())
