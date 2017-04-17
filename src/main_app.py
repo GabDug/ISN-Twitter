@@ -1,4 +1,3 @@
-import logging
 import threading
 import tkinter as tk
 from tkinter import *
@@ -7,11 +6,11 @@ from tkinter.ttk import *
 
 import ITwython
 import auth_gui
+import logger_conf
 import mttkinter as tk
 import token_manager
 from ITwython import Tweet
 
-import logger_conf
 logger = logger_conf.Log.logger
 
 
@@ -41,6 +40,8 @@ class App(Frame):
         self.parent = parent
         self.parent.lift()
 
+        self.exist = True
+
         self.stream_connection = stream_connection
         self.static_connection = static_connection
 
@@ -58,8 +59,15 @@ class App(Frame):
             logger.warning("User token does not exist !")
             try:
                 app_key, app_secret = token_manager.get_app_tokens()
-            except TypeError:
-                logger.debug("Oups")
+            except TypeError as e:
+                logger.error("Impossible de trouver les tokens de l'application ! " + str(e))
+                messagebox.showerror(
+                    "Erreur",
+                    "Impossible de trouver les tokens de l'application !"
+                )
+                self.exist = False
+                self.parent.destroy()
+                return
             connectemp = ITwython.ConnecTemporaire(app_key, app_secret)
             auth_url = connectemp.auth_url
 
@@ -72,9 +80,19 @@ class App(Frame):
         # http://python-guide-pt-br.readthedocs.io/en/latest/writing/style/#unpacking
         self.app_key, self.app_secret, self.user_key, self.user_secret = token_manager.get_all_tokens()
         # Une fois qu'on a les tokens, créer la connexion
+
         self.connec = ITwython.Connec(self.app_key, self.app_secret, self.user_key, self.user_secret)
 
-        self.ajout_widget()
+        if self.connec.exist:
+            self.ajout_widget()
+        else:
+            messagebox.showerror(
+                "Erreur",
+                "Impossible de se connecter à Twitter !  Vérifiez vos paramètres réseaux et réessayez."
+            )
+            self.exist = False
+            self.parent.destroy()
+            return
 
     def ajout_widget(self):
         self.sidebar = Sidebar(self)
@@ -126,7 +144,8 @@ class EnvoiTweet(Frame):
             def action_async():
                 logger.info("Entering action")
 
-                # On désactive l'entrée utilisateur pendant l'envoi du tweet
+                # On dés
+                # active l'entrée utilisateur pendant l'envoi du tweet
                 self.tweet.state(["disabled"])
                 self.bouton.state(["disabled"])
 
@@ -326,6 +345,9 @@ if __name__ == "__main__":
     # on ne travaille pas directement dans principal
     # mais on utilise un cadre (Objet App)
     app = App(principal, stream_connection=False, static_connection=True)
-    app.grid(sticky="nsew")
+
+    # On vérifie que l'application n'a pas été supprimée avec une erreur
+    if app.exist:
+        app.grid(sticky="nsew")
     principal.mainloop()
     logger.info("TWISN CLOSED")

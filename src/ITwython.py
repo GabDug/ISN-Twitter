@@ -64,7 +64,17 @@ class ConnecTemporaire:
 
 class Connec(Twython):
     def __init__(self, app_key, app_secret, user_key, user_secret):
-        Twython.__init__(self, app_key, app_secret, user_key, user_secret)
+        try:
+            Twython.__init__(self, app_key, app_secret, user_key, user_secret)
+            cred = self.verify_credentials()
+            logger.debug("     " + str(cred))
+            self.user = User(cred)
+            self._debugrate()
+            self.exist = True
+        except TwythonError as e:
+            logger.error("Impossible de créer la connection Twython ! Erreur : "+str(e))
+            self.exist = False
+            return
         # TODO Mettre try/except ?
         self.twython = self
         # except AttributeError as e:
@@ -72,10 +82,8 @@ class Connec(Twython):
         #     logger.debug(e)
         #     self.twython = None
         logger.debug("     " + str(self))
-        cred = self.verify_credentials()
-        logger.debug("     " + str(cred))
-        self.user = User(cred)
-        self._debugrate()
+
+
 
     def tweeter(self, message_du_tweet):
         try:
@@ -92,7 +100,7 @@ class Connec(Twython):
     def _debugrate(self):
         """Affiche les infos sur les limites d'utilisation dans la console"""
         # J'ai "fixé" la fonction qui ne fait plus crasher et est plus propre : elle fait tjr la même chose
-        logger.debug("Debugrate :\n  " + repr(self))
+        logger.debug("Debugrate : " + repr(self))
 
         a = self.get_lastfunction_header('x-rate-limit-limit')
         b = self.get_lastfunction_header('x-rate-limit-remaining')

@@ -9,6 +9,8 @@ logger = logger_conf.Log.logger
 chemin_relatif = "/../assets/Twitter_Logo_Blue_Cropped.png"
 chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
 
+# TODO Faire menu clic droit pour copier/coller
+
 
 class FenetreConnexion(tk.Toplevel):
     def __init__(self, root, co_temporaire, auth_url, test=False):
