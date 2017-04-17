@@ -96,17 +96,21 @@ def user_token_exist() -> bool:
 
 # crypte les str par lequelles on va remplacer les usertokens
 def _encoder(texte: str) -> str:
-    return (base64.encodebytes(texte.encode('ascii'))).decode('unicode_escape')
-
+    encoded = (base64.encodebytes(texte.encode('ascii'))).decode('unicode_escape')
+    return encoded
 
 # décrypte chaque élément de la liste dans une nouvelle liste
 def _decoder(liste: list) -> list:
     # TODO Ajouter mécanisme pour enlever les = (et les rajouter) voir lien :
     # http://stackoverflow.com/questions/2941995/python-ignore-incorrect-padding-error-when-base64-decoding
     for i in range(len(liste)):
+        missing_padding = len(liste[i]) % 4 #on regarde si c'est un multiple de 4
+        if missing_padding == 3:
+            liste[i] += 'A=='
+        elif missing_padding == 1 or missing_padding == 2:
+            liste[i] += '=' * missing_padding
         liste[i] = (base64.decodebytes(liste[i].encode())).decode('unicode_escape')
     return liste
-
 
 def _set_app_tokens(token1: str, token2: str) -> bool:
     """Permet de changer les tokens app qui sont stockés dans un fichier. Maintenance uniquement"""
@@ -138,7 +142,11 @@ def _compterligne():
 ##        liste[i] += b'='* (4 - missing_padding) #si non alors on ajoute des '=' pour quil le devienne
 ##    idée pour les '=' a ajouter/retirer, ne fonctionne pas, message d'erreur :
 ##    TypeError: Can't convert 'bytes' object to str implicitly
-
+##missing_padding = len(liste) % 4 #on regarde si c'est un multiple de 4
+##if missing_padding == 3:
+##    data += b'A=='
+##elif missing_padding == 1or missing_padding == 2:
+##    data += b'=' * missing_padding 
 
 # Tests
 if __name__ == "__main__":
