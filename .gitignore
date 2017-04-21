@@ -1,13 +1,14 @@
 # Passwords
 data/secret.py
-data/secrets
+secret*
+secrets
 secret
 passwords.*
 
 # tests
 src/test.py
 tests.py
-
+test*.py
 # PyCharm (IDEA)
 .idea/
 
