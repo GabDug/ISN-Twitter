@@ -15,15 +15,14 @@ logger = logger_conf.Log.logger
 # ou depuis main_app avec l'ancienne implantation
 
 if getattr(sys, 'frozen', False):
-    # The application is frozen
+    # L'application est en .exe
     datadir = os.path.dirname(sys.executable)
     chemin_relatif = "secrets"
     chemin_absolu = os.path.abspath(os.path.dirname(sys.executable) + "/" + chemin_relatif)
     logger.info("Twysn is frozen, secret file : " + chemin_absolu)
 
 else:
-    # The application is not frozen
-    # Change this bit to match where you store your data files:
+    # L'application est en dev
     chemin_relatif = "/../data/secrets"
     chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
     logger.info("Twysn isn't frozen, secret file : " + chemin_absolu)

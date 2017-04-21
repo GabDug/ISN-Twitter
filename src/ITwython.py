@@ -4,7 +4,9 @@ from twython import *
 from twython import TwythonStreamer
 
 import logger_conf
+
 logger = logger_conf.Log.logger
+
 
 # Modèles
 class User:
@@ -27,6 +29,8 @@ class Tweet:
         self.id_str = data["id_str"]
         self.text = data["text"]
         self.user = User(data["user"])
+
+
 # Connections
 class ConnecTemporaire:
     def __init__(self, _app_token, _app_secret):
@@ -67,12 +71,12 @@ class Connec(Twython):
         try:
             Twython.__init__(self, app_key, app_secret, user_key, user_secret)
             cred = self.verify_credentials()
-            logger.debug("     " + str(cred))
+            # logger.debug(str(cred).encode("utf-8").decode("utf-8"))
             self.user = User(cred)
             self._debugrate()
             self.exist = True
         except TwythonError as e:
-            logger.error("Impossible de créer la connection Twython ! Erreur : "+str(e))
+            logger.error("Impossible de créer la connection Twython ! Erreur : " + str(e))
             self.exist = False
             return
         # TODO Mettre try/except ?
@@ -82,8 +86,6 @@ class Connec(Twython):
         #     logger.debug(e)
         #     self.twython = None
         logger.debug("     " + str(self))
-
-
 
     def tweeter(self, message_du_tweet):
         try:
@@ -115,8 +117,8 @@ class Connec(Twython):
         if a is None and b is None and c is None:
             logger.debug("  No header provided")
 
-    # def __repr__(self):
-    #     return "<Connec : {0}>".format(self)
+            # def __repr__(self):
+            #     return "<Connec : {0}>".format(self)
 
 
 class MyStreamer(TwythonStreamer):
@@ -129,7 +131,7 @@ class MyStreamer(TwythonStreamer):
         logger.debug(data)
         if 'text' in data:
             logger.debug(data["user"]["screen_name"].encode("utf-8"), data["user"]["name"].encode("utf-8"),
-                  data['text'].encode("utf-8"), data["created_at"].encode("utf-8"))
+                         data['text'].encode("utf-8"), data["created_at"].encode("utf-8"))
         self.timeline.add_data(data)
 
     def on_error(self, status_code, data):
