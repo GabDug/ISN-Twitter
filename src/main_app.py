@@ -140,7 +140,7 @@ class EnvoiTweet(Frame):
     def tweeter(self):
         # On récupère le message depuis le widget d'entrée de texte
         message = self.tweet_message.get()
-        if not self.static_connection:
+        if self.static_connection:
             def action_async():
                 logger.info("Entering action")
 
