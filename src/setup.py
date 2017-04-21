@@ -3,8 +3,11 @@ import sys
 
 from cx_Freeze import setup, Executable
 
+# Add the argument build so we can run setup.py as usual
+# Ajoute l'argument build pour lancer setup.py normalement au lieu de "python setup.py -build"
 sys.argv.append("build")
 
+# Get the python interpreter path directory
 interpreter_path = os.path.dirname(sys.executable)
 
 include_files = [r"{0}\DLLs\tcl86t.dll".format(interpreter_path),

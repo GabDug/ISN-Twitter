@@ -1,1 +1,2 @@
 twython==3.4.0
+cx_Freeze
