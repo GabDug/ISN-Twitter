@@ -13,8 +13,8 @@ chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + che
 
 
 class FenetreConnexion(tk.Toplevel):
-    def __init__(self, root, co_temporaire, auth_url, test=False):
-        tk.Toplevel.__init__(self, root)
+    def __init__(self, parent, co_temporaire, auth_url, test=False):
+        tk.Toplevel.__init__(self, parent)
         self.overrideredirect(False)
         self.title("TwISN")
         # TODO Choisir entre TwISN ou Twyisn
