@@ -16,7 +16,9 @@ include_files = [r"{0}\DLLs\tcl86t.dll".format(interpreter_path),
                  "ITwython.py",
                  "auth_gui.py",
                  "token_manager.py",
-                 "../data/secrets"]
+                 "../dev_assets/list_tweets.py",
+                 "../data/secrets",
+                 "../assets/twisn.png"]
 
 os.environ['TCL_LIBRARY'] = r'{0}\tcl\tcl8.6'.format(interpreter_path)
 os.environ['TK_LIBRARY'] = r'{0}\tcl\tk8.6'.format(interpreter_path)
@@ -28,7 +30,7 @@ if sys.platform == 'win32':
     base = 'Win32GUI'
 
 executables = [
-    Executable('main_app.py', base=base)
+    Executable('main_app.py', base=base, icon="../assets/twisn.ico")
 ]
 
 setup(name='TwISN',
