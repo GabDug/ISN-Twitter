@@ -151,7 +151,7 @@ class MyStreamer(TwythonStreamer):
         self.timeline.add_data(data)
 
     def on_error(self, status_code, data):
-        logger.error("Erreur ! status_code")
+        logger.error("Erreur ! "+status_code)
 
         # Want to stop trying to get data because of the error?
         # Uncomment the next line!
