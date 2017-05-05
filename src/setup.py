@@ -8,8 +8,10 @@ from cx_Freeze import setup, Executable
 sys.argv.append("build")
 
 # Get the python interpreter path directory
+# On récupère le chemin du dossier python
 interpreter_path = os.path.dirname(sys.executable)
 
+# Ajoute les fichiers
 include_files = [r"{0}\DLLs\tcl86t.dll".format(interpreter_path),
                  r"{0}\DLLs\tk86t.dll".format(interpreter_path),
                  "mttkinter.py",
@@ -20,6 +22,7 @@ include_files = [r"{0}\DLLs\tcl86t.dll".format(interpreter_path),
                  "../data/secrets",
                  "../assets/twisn.png"]
 
+# Ajoute les variables d'environnement nécessaires
 os.environ['TCL_LIBRARY'] = r'{0}\tcl\tcl8.6'.format(interpreter_path)
 os.environ['TK_LIBRARY'] = r'{0}\tcl\tk8.6'.format(interpreter_path)
 

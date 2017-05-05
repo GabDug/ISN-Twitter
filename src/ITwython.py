@@ -1,9 +1,10 @@
 import datetime
 
 from twython import *
-from twython import TwythonStreamer
 
 import logger_conf
+
+# from twython import TwythonStreamer
 
 logger = logger_conf.Log.logger
 
@@ -38,8 +39,8 @@ class ConnecTemporaire:
     def __init__(self, _app_token, _app_secret):
         self.app_token = _app_token
         self.app_secret = _app_secret
-        logger.debug(self.app_token)
-        logger.debug(self.app_secret)
+        logger.debug("Temp App Token          : " + self.app_token)
+        logger.debug("Temp App Token Secret   : " + self.app_secret)
 
         self.connection = Twython(self.app_token, self.app_secret)
         auth = self.connection.get_authentication_tokens()
@@ -47,24 +48,26 @@ class ConnecTemporaire:
 
         self.user_token = auth['oauth_token']
         self.user_secret = auth['oauth_token_secret']
-        logger.debug(self.user_token)
-        logger.debug(self.user_secret)
+        logger.debug("Temp OAuth Token        : " + self.user_token)
+        logger.debug("Temp OAuth Token Secret : " + self.user_secret)
+
         self.auth_url = auth['auth_url']
+        logger.debug("Lien de connexion       :" + self.auth_url)
 
     def final(self, oauth_verifier):
         # On demande des jetons permanents avec les jetons temporaires et le code PIN
-        logger.debug(" User token : " + self.user_token)
-        logger.debug(" User secret token : " + self.user_secret)
-        logger.debug(" App token : " + self.app_token)
-        logger.debug(" App token : " + self.app_secret)
+        logger.debug("App Token         : " + self.app_token)
+        logger.debug("App Token Secret  : " + self.app_secret)
+        logger.debug("User Token        : " + self.user_token)
+        logger.debug("User Token Secret : " + self.user_secret)
         co = Twython(self.app_token, self.app_secret, self.user_token, self.user_secret)
 
         try:
-            final_step = co.get_authorized_tokens(oauth_verifier)
-            logger.debug(final_step)
-            return True, final_step
+            final_step_dic = co.get_authorized_tokens(oauth_verifier)
+            logger.debug("Final Step :" + str(final_step_dic))
+            return True, final_step_dic
         except TwythonError as e:
-            logger.debug(e)
+            logger.debug("Erreur Twython : " + e)
             return False, str(e)
 
 
@@ -74,19 +77,26 @@ class Connec(Twython):
             try:
                 Twython.__init__(self, app_key, app_secret, user_key, user_secret)
                 cred = self.verify_credentials()
-                # logger.debug(str(cred).encode("utf-8").decode("utf-8"))
+                logger.debug(str(cred).encode("utf-8").decode("utf-8"))
                 self.user = User(cred)
                 self._debugrate()
                 self.exist = True
                 self.fake = False
+                self.erreur = None
             except TwythonError as e:
-                logger.error("Impossible de créer la connection Twython ! Erreur : " + str(e))
+                if str(e) == "Twitter API returned a 401 (Unauthorized), Invalid or expired token.":
+                    logger.error("Token invalide ou expiré ! Erreur : " + str(e))
+                    self.erreur = "token_invalid"
+                else:
+                    logger.error("Impossible de créer la connection Twython ! Erreur : " + str(e))
+                    self.erreur = True
                 self.exist = False
                 return
         else:
-            logger.warning("Connexion non créée")
+            logger.warning("Debug : Connexion non créée.")
             self.exist = True
             self.fake = True
+            self.erreur = None
             return
         # TODO Mettre try/except ?
         self.twython = self
@@ -136,9 +146,11 @@ class Connec(Twython):
 class MyStreamer(TwythonStreamer):
     def __init__(self, timeline, *args, **kwargs):
         TwythonStreamer.__init__(self, *args, **kwargs)
+
         # On garde l'objet timeline pour pouvoir renvoyer les tweets à cet objet
         self.timeline = timeline
 
+    # Fonctions lancées à la réception d'informations (succès ou échec)
     def on_success(self, data):
         logger.debug(data)
         if 'text' in data:
@@ -151,8 +163,7 @@ class MyStreamer(TwythonStreamer):
         self.timeline.add_data(data)
 
     def on_error(self, status_code, data):
-        logger.error("Erreur ! "+status_code)
+        logger.error("Erreur ! " + status_code)
 
-        # Want to stop trying to get data because of the error?
-        # Uncomment the next line!
+        # On peut se déconnecter après une erreur
         # self.disconnect()

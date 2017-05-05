@@ -4,10 +4,14 @@ import webbrowser
 from tkinter.ttk import *
 
 import logger_conf
+import path_finder
+
 logger = logger_conf.Log.logger
 
+# TODO Ajouter les ressources de aut_gui à path_finder
 chemin_relatif = "/../assets/Twitter_Logo_Blue_Cropped.png"
 chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
+
 
 # TODO Faire menu clic droit pour copier/coller
 
@@ -16,9 +20,13 @@ class FenetreConnexion(tk.Toplevel):
     def __init__(self, parent, co_temporaire, auth_url, test=False):
         tk.Toplevel.__init__(self, parent)
         self.overrideredirect(False)
-        self.title("TwISN")
+
         # TODO Choisir entre TwISN ou Twyisn
-        self.parent = self
+        self.title("TwISN")
+
+        frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()
+        icon = tk.PhotoImage(file=chemin_absolu)
+        self.tk.call('wm', 'iconphoto', self._w, icon)
 
         self.connec_temporaire = co_temporaire
 
@@ -33,7 +41,7 @@ class FenetreConnexion(tk.Toplevel):
         style.configure("TEntry", foreground="black", background="#343232", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
 
-        fenetre = Frame(self.parent)
+        fenetre = Frame(self)
         fenetre.pack()
 
         cadre = Frame(fenetre)
@@ -42,7 +50,7 @@ class FenetreConnexion(tk.Toplevel):
         titreconnexion = Label(cadre, text="Connexion",
                                font=('Segoe UI Semilight', 24))
 
-        # logophoto = tk.PhotoImage(file=chemin_absolu)
+        # logophoto = tk.PhotoImage(file=chemin_app_tokens)
         # logo = Label(cadre, width=11, image=logophoto, style="BW.TLabel")
         # logo.image = logophoto
         #
@@ -75,10 +83,12 @@ class FenetreConnexion(tk.Toplevel):
 
     def connexion(self):
         from main_app import final
-        logger.debug("Input Pin = " + str(self.pin_variable.get()))
+        logger.debug("Code entré : " + str(self.pin_variable.get()))
+
+        # Si on n'est pas en train de faire la mise en page (pas debug)
         if not self.test:
-            final(self.parent, self.connec_temporaire, self.pin_variable.get())
-        self.parent.destroy()
+            final(self, self.connec_temporaire, self.pin_variable.get())
+        self.destroy()
 
 
 # Permet d'éxécuter le code uniquement si lancé
