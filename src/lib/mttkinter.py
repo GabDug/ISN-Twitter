@@ -1,4 +1,4 @@
-'''Thread-safe version of tkinter.
+"""Thread-safe version of tkinter.
 
 Copyright (c) 2014, Andrew Barnert
 
@@ -53,7 +53,9 @@ as long as mttkinter is imported at some point before extra threads are
 created.
 
 Author: Allen B. Taylor, a.b.taylor@gmail.com
-'''
+
+Note : this version is from https://github.com/abarnert/mttkinter/issues/1 by https://github.com/Smurf-IV
+"""
 
 import queue
 import threading
@@ -67,6 +69,7 @@ class _Tk(object):
 
     def __init__(self, tk, mtDebug=0, mtCheckPeriod=10):
         self._tk = tk
+
         # Create the incoming event queue.
         self._eventQueue = queue.Queue(1)
 
@@ -101,11 +104,17 @@ class _TkAttr(object):
         """
 
         # Check if we're in the creation thread.
-        if threading.currentThread() == self._tk._creationThread:
+        # noinspection PyProtectedMember
+        # if threading.currentThread() == self._tk._creationThread:
+        # fix from https://stackoverflow.com/questions/14073463/mttkinter-doesnt-terminate-threads
+        if (threading.currentThread() == self._tk._creationThread) \
+                or isinstance(threading.currentThread(), threading._DummyThread):
             # We're in the creation thread; just call the event directly.
-            if self._tk._debug >= 8 or \
-                                                    self._tk._debug >= 3 and self._attr.__name__ == 'call' and \
-                                            len(args) >= 1 and args[0] == 'after':
+            # noinspection PyProtectedMember
+            if self._tk._debug >= 8 or self._tk._debug >= 3 \
+                    and self._attr.__name__ == 'call' \
+                    and len(args) >= 1 \
+                    and args[0] == 'after':
                 print('Calling event directly: {} {} {}'.format(
                     self._attr.__name__, args, kwargs))
             return self._attr(*args, **kwargs)
@@ -113,9 +122,11 @@ class _TkAttr(object):
             # We're in a different thread than the creation thread; enqueue
             # the event, and then wait for the response.
             responseQueue = queue.Queue(1)
+            # noinspection PyProtectedMember
             if self._tk._debug >= 1:
                 print('Marshalling event: {} {} {}'.format(
                     self._attr.__name__, args, kwargs))
+            # noinspection PyProtectedMember
             self._tk._eventQueue.put((self._attr, args, kwargs, responseQueue))
             isException, response = responseQueue.get()
 
@@ -137,7 +148,10 @@ def _Tk__init__(self, *args, **kwargs):
     for name, value in kwargs.items():
         if name in new_kwnames:
             new_kwargs[name] = value
-            del kwargs[name]
+
+    # Handle the modification of kwargs whilst iterating from above for loop
+    for name in new_kwnames:
+        kwargs.pop(name, None)
 
     # Call the original __init__ method, creating the internal tk member.
     self.__original__init__mttkinter(*args, **kwargs)
@@ -156,7 +170,7 @@ Tk.__init__ = _Tk__init__
 
 
 def _CheckEvents(tk):
-    "Event checker event."
+    """Event checker event."""
 
     used = False
     try:
@@ -164,9 +178,11 @@ def _CheckEvents(tk):
         while True:
             try:
                 # Get an event request from the queue.
+                # noinspection PyProtectedMember
                 method, args, kwargs, responseQueue = \
                     tk.tk._eventQueue.get_nowait()
             except:
+                # noinspection PyProtectedMember
                 if tk.tk._debug >= 2:
                     print('Event queue empty')
                 # No more events to process.
@@ -175,14 +191,15 @@ def _CheckEvents(tk):
                 # Call the event with the given arguments, and then return
                 # the result back to the caller via the response queue.
                 used = True
+                # noinspection PyProtectedMember
                 if tk.tk._debug >= 2:
                     print('Calling event from main thread: {} {} {}'
                           .format(method.__name__, args, kwargs))
                 try:
                     responseQueue.put((False, method(*args, **kwargs)))
                 except SystemExit as ex:
-                    raise
-                except Exception as ex:
+                    raise SystemExit(ex)
+                except Exception:
                     # Calling the event caused an exception; return the
                     # exception back to the caller so that it can be raised
                     # in the caller's thread.
@@ -195,6 +212,7 @@ def _CheckEvents(tk):
         if used:
             tk.after_idle(_CheckEvents, tk)
         else:
+            # noinspection PyProtectedMember
             tk.after(tk.tk._checkPeriod, _CheckEvents, tk)
 
 
@@ -203,17 +221,17 @@ def _testThread(root):
     text = "This is Tcl/Tk version %s" % TclVersion
     if TclVersion >= 8.1:
         try:
-            text = text + "\nThis should be a cedilla: \347"
+            text += "\nThis should be a cedilla: \347"
         except NameError:
             pass  # no unicode support
     try:
         if root.globalgetvar('tcl_platform(threaded)'):
-            text = text + "\nTcl is built with thread support"
+            text += "\nTcl is built with thread support"
         else:
             raise RuntimeError
     except:
-        text = text + "\nTcl is NOT built with thread support"
-    text = text + "\nmttkinter works with or without Tcl thread support"
+        text += "\nTcl is NOT built with thread support"
+    text += "\nmttkinter works with or without Tcl thread support"
     label = Label(root, text=text)
     label.pack()
     button = Button(root, text="Click me!",
@@ -221,8 +239,8 @@ def _testThread(root):
                         text="[%s]" % root.button['text']))
     button.pack()
     root.button = button
-    quit = Button(root, text="QUIT", command=root.destroy)
-    quit.pack()
+    quitBtn = Button(root, text="QUIT", command=root.destroy)
+    quitBtn.pack()
     # The following three commands are needed so the window pops
     # up on top on Windows...
     root.iconify()
@@ -245,9 +263,8 @@ def _pressOk(root, button):
 # Test. Mostly borrowed from the tkinter module, but the important bits moved
 # into a separate thread.
 if __name__ == '__main__':
-    import threading
-
     root = Tk(mtDebug=1)
     thread = threading.Thread(target=_testThread, args=(root,))
     thread.start()
     root.mainloop()
+    thread.join()

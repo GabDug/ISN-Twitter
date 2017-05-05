@@ -1,1 +1,3 @@
-twython==3.4.0
+twython
+cx_Freeze
+Pillow
