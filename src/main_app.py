@@ -1,8 +1,8 @@
 import os
+import sys
 import threading
 import tkinter as tk
 import urllib
-from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import *
 from urllib.request import urlopen
@@ -12,10 +12,10 @@ from PIL import Image, ImageTk
 import ITwython
 import auth_gui
 import logger_conf
-import mttkinter as tk
 import path_finder
 import token_manager
 from ITwython import Tweet
+from lib import mttkinter as tk
 
 logger = logger_conf.Log.logger
 
@@ -93,10 +93,18 @@ class App(Frame):
         if self.connec.exist:
             self.ajout_widget()
         else:
-            messagebox.showerror(
-                "Erreur",
-                "Impossible de se connecter à Twitter !  Vérifiez vos paramètres réseaux et réessayez."
-            )
+            if self.connec.erreur == "token_invalid":
+                messagebox.showwarning(
+                    "Impossible de se connecter à Twitter !",
+                    "Les identifiants de connexion sont invalides ou expirés, "
+                    "merci de réessayer."
+                )
+                token_manager.delete_tokens()
+            else:
+                messagebox.showerror(
+                    "Impossible de se connecter à Twitter !",
+                    "Vérifiez vos paramètres réseaux et réessayez."
+                )
             self.exist = False
             self.parent.destroy()
             return
@@ -111,6 +119,9 @@ class App(Frame):
 
         self.tl = TimeLine(self, stream_connection=self.stream_connection, static_connection=self.static_connection)
         self.tl.grid(column=2, row=0)
+
+        self.sidebar.grid_propagate(0)
+        self.sidebar.rowconfigure(0, weight=1)
 
 
 class EnvoiTweet(Frame):
@@ -129,52 +140,55 @@ class EnvoiTweet(Frame):
         else:
             self.connec = None
 
+        # On crée un cadre pour ajouter une marge égale
+        self.cadre = Frame(self)
+        self.cadre.grid(column=0, row=0, pady=10, padx=10)
+
         # On met en place le cadre d'envoi de tweet
         self.tweet_message = tk.StringVar()
         self.message_resultat = tk.StringVar()
 
-        # TODO Utiliser un champ Text
-        self.texte = Label(self, text="Nouveau tweet :")
-        self.tweet = Entry(self, textvariable=self.tweet_message)
-        self.bouton = Button(self, text="Tweeter", command=self.tweeter)
-        self.message = Label(self, textvariable=self.message_resultat)
+        # TODO Utiliser un champ Text de plusieurs lignes
+        self.label = Label(self.cadre, text="Nouveau tweet :")
+        self.tweet = Entry(self.cadre, textvariable=self.tweet_message)
+        self.bouton = Button(self.cadre, text="Tweeter", command=self.tweeter)
+        self.message = Label(self.cadre, textvariable=self.message_resultat)
 
-        self.texte.grid(column=0, row=0)
+        self.label.grid(column=0, row=0)
         self.tweet.grid(column=0, row=1)
         self.bouton.grid(column=0, row=2)
         self.message.grid(column=0, row=3)
 
     def tweeter(self):
-        # On récupère le message depuis le widget d'entrée de texte
+        # On récupère le message depuis le widget d'entrée de label
         message = self.tweet_message.get()
+
+        # Si la connection est activé (pas debug)
         if self.static_connection:
             def action_async():
-                logger.info("Entering action")
+                logger.debug("Tweet : Début action_async")
 
-                # On dés
-                # active l'entrée utilisateur pendant l'envoi du tweet
+                # On désactive l'entrée utilisateur pendant l'envoi du tweet
                 self.tweet.state(["disabled"])
                 self.bouton.state(["disabled"])
 
                 # On lance le tweet via ITwython
                 succes, msg = self.connec.tweeter(message)
 
-                logger.debug("succes : " + str(succes))
-                logger.debug("msg : " + str(msg))
+                logger.debug("Tweet : Succès : " + str(succes))
+                logger.debug("Tweet : Message : " + str(msg))
 
                 # On lance les actions de retour
                 self.callback(succes, msg)
-                logger.warning("Action done")
+                logger.debug("Tweet : Fin action_async")
+                return
 
             # On lance l'action du tweet dans un thread asynchrone
-
             th = threading.Thread(target=action_async, daemon=True)
             th.start()
 
     def callback(self, succes: bool, msg_):
-        """Éxecuté après l'envoi"""
-        logger.debug("Début callback")
-
+        """Éxecuté après l'envoi du tweet, pour afficher un message de confirmation ou d'erreur."""
         # Si le tweet a bien été envoyé
         if succes:
             self.message_resultat.set(msg_)
@@ -184,11 +198,9 @@ class EnvoiTweet(Frame):
                 "Impossible d'envoyer le tweet",
                 "Erreur : {0}".format(msg_)
             )
-
         # On réactive l'entrée utilisateur
         self.tweet.state(["!disabled"])
         self.bouton.state(["!disabled"])
-        logger.debug("Fin callback")
 
 
 class Sidebar(Frame):
@@ -197,13 +209,20 @@ class Sidebar(Frame):
         self.configure(style="Sidebar.TFrame", width=80)
 
         self.cadre = Frame(self)
-        self.cadre.grid(column=0, row=0, pady=20, padx=20)
+        self.cadre.grid(column=0, row=0, pady=20, padx=20, sticky="s")
+
         # Icones :
         # On utilise le code hexadécimal obtenu ici
         # https://docs.microsoft.com/en-us/uwp/api/Windows.UI.Xaml.Controls.Symbol
-        self.icone_option = Label(self.cadre, text=chr(int("E115", 16)), font=('Segoe MDL2 Assets', 20),
+        self.icone_utilisateur = Label(self.cadre, text=chr(int("E13D", 16)), font=('Segoe MDL2 Assets', 20),
+                                       style="Sidebar.TLabel")
+        self.icone_option = Label(self.cadre, anchor=tk.S, text=chr(int("E115", 16)), font=('Segoe MDL2 Assets', 20),
                                   style="Sidebar.TLabel")
-        self.icone_option.grid(row=0, column=0, sticky="s")
+
+        self.icone_utilisateur.grid(row=0, column=0, sticky="s", ipady=20)
+        self.icone_option.grid(row=1, column=0, sticky="s")
+
+        self.cadre.grid_columnconfigure(0, weight=3)
 
 
 class TweetGUI(Frame):
@@ -225,11 +244,11 @@ class TweetGUI(Frame):
 
         # self.profile_image = Label(self, image=None)
         try:
-            self.status = Message(self, text=status, width=380, foreground="white", background="#343232",
-                                  font=('Segoe UI', 10))
+            self.status = tk.Message(self, text=status, width=380, foreground="white", background="#343232",
+                                     font=('Segoe UI', 10))
         except tk.TclError as e:
-            self.status = Message(self, text=status.encode("utf-8"), width=380, foreground="white",
-                                  background="#343232", font=('Segoe UI', 10))
+            self.status = tk.Message(self, text=status.encode("utf-8"), width=380, foreground="white",
+                                     background="#343232", font=('Segoe UI', 10))
             logger.error(e)
 
         try:
@@ -267,20 +286,18 @@ class ProfilePictureGUI(Frame):
 
         # TODO Fixer le lien si l'app est frozen
         # On supprime les : et / de l'url pour en faire un nom de fichier
-        save_relatif = self.lien.replace(":", "").replace("/", "")
+        save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
         # On obtient le répertoire de sauvegarde des photos
         cache_dir = path_finder.PathFinder.get_cache_directory()
-        logger.debug("cache dir : "+cache_dir)
+        logger.debug("Dossier cache : " + cache_dir)
 
         # On crée un string avec le lien absolu vers le fichier
         self.save = cache_dir + "/" + save_relatif
-        logger.debug("self.save" + self.save)
-        # Si le fichier existe déjà pas besoin de le télécharger
-        if os.path.isfile(self.save):
-            logger.debug("File already exists ! ")
-        # Sinon on le télécharge
-        else:
-            logger.debug("Downloading file ! ")
+        logger.debug("Fichier cache : " + self.save)
+
+        # Si le fichier n'existe pas alors on le télécharge
+        if not os.path.isfile(self.save):
+            logger.debug("Téléchargement du fichier.")
             try:
                 testfile = urllib.request.URLopener()
                 testfile.retrieve(self.lien, self.save)
@@ -295,7 +312,6 @@ class ProfilePictureGUI(Frame):
 
         # TODO Ajouter exception pour ouverture fichier
         self.pil_image = Image.open(self.save)
-
         self.photo = ImageTk.PhotoImage(self.pil_image)
 
         label = Label(self, image=self.photo)
@@ -312,14 +328,14 @@ class TimeLine(Frame):
 
         # J'ai mis le canvas en bleu pour bien voir là où il est : on est pas censé le voir mais juste le frame
         # On utilise un frame dans un canvas car pas de scrollbar sur le frame => scrollbar sur canvas
-        self.canvas = Canvas(self, borderwidth=0, width=400, background="blue")
+        self.canvas = tk.Canvas(self, borderwidth=0, width=400, background="blue")
         self.frame = Frame(self.canvas)
         self.scrollbar = Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         self.scrollbar.grid(column=1, row=0, sticky="nes")
         self.canvas.grid(column=0, row=0, sticky="nesw")
-        self.canvas.create_window((4, 4), window=self.frame,
+        self.canvas.create_window((0, 0), window=self.frame,
                                   tags="self.frame")
 
         self.frame.bind("<Configure>", self.config_cadre)
@@ -340,9 +356,11 @@ class TimeLine(Frame):
 
             def async_stream():
                 # On utilise une autre notation que with="followings" car with est un mot clé réservé de python
-                # Sinon on doit modifier le fichier helper de la librairie twython => hack sale
+                # Sinon on doit modifier le fichier helper de la librairie twython => hack peu pratique
                 # On utilise un unpacking avec double splat http://deusyss.developpez.com/tutoriels/Python/args_kwargs/
                 self.streamer.user(**{"with": "followings"})
+                return
+                # TODO voir si ça marche le return
 
             # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
             thread_tl = threading.Thread(target=async_stream, daemon=True)
@@ -366,7 +384,7 @@ class TimeLine(Frame):
             for fake_tweet in liste:
                 self.add_data(fake_tweet)
         except ImportError as e:
-            logger.error("Can't import tweets ! " + str(e))
+            logger.error("Impossible d'importer le stock de tweets ! " + str(e))
 
     def add_data(self, data):
         """Ajoute un objet TweetGUI à la TimeLine à partir de données brutes."""
@@ -383,48 +401,44 @@ class TimeLine(Frame):
         self.ligne = self.ligne + 1
 
     def config_cadre(self, event):
-        """Reset the scroll region to encompass the inner frame."""
-        logger.debug(event)
-        logger.debug("OnFrameConfigurate.")
+        # TODO Bloquer scroll à la fin
+        logger.debug("Reconfiguration Cadre TimeLine : " + str(event))
+        logger.debug(self.scrollbar.get())
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        logger.debug(self.scrollbar.get())
 
 
 # On commence le code ici
 if __name__ == "__main__":
-    logger.info("Starting Twysn")
+    logger.info("Démarrage de TwISN")
 
     # Principal est la racine de l'app
     principal = tk.Tk()
     principal.title("TwISN")
     principal.config(bg='white')
 
-    if getattr(sys, 'frozen', False):
-        # L'application est en .exe
-        frozen = True
-        datadir = os.path.dirname(sys.executable)
-        chemin_relatif = "twisn.png"
-        chemin_absolu = os.path.abspath(os.path.dirname(sys.executable) + "/" + chemin_relatif)
-        logger.info("Twysn is frozen, secret file : " + chemin_absolu)
+    # Récupération du chemin de l'icone et de l'état de l'applciation:
+    frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()
 
-    else:
-        frozen = False
-        # L'application est en dev
-        chemin_relatif = "/../assets/twisn.png"
-        chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
-        logger.info("Twysn isn't frozen, secret file : " + chemin_absolu)
-
-    icon = PhotoImage(file=chemin_absolu)
+    # On charge l'icone
+    icon = tk.PhotoImage(file=chemin_absolu)
+    # Ajoutée dans le gestionnaire de fenêtre Windows
     principal.tk.call('wm', 'iconphoto', principal._w, icon)
 
-    # on ne travaille pas directement dans principal
-    # mais on utilise un cadre (Objet App)
+    # On ne travaille pas directement dans principal (objet Tk)
+    # Mais on utilise un cadre (Objet App qui hérite de Frame)
+    # stream_connection et static_connnection sont utilisées pour bloquer les connexions
+    # pendant le développement de l'application
     app = App(principal, stream_connection=False, static_connection=True, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.exist:
         app.grid(sticky="nsew")
+        app.columnconfigure(1, weight=1)
+        app.rowconfigure(0, weight=1)
 
     principal.mainloop()
     app.quit()
     principal.quit()
-    logger.info("TWISN CLOSED")
+    logger.info("Fermeture de TwISN")
+    sys.exit()
