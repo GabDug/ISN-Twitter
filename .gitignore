@@ -1,6 +1,8 @@
 # Passwords
 data/secret.py
 secret*
+user_tokens
+app_tokens
 secrets
 secret
 passwords.*
@@ -29,7 +31,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
