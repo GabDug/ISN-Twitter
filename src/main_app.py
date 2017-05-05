@@ -1,48 +1,84 @@
-import logging
+import os
+import sys
 import threading
 import tkinter as tk
-
-from sys import stdout
-from tkinter import *
-from tkinter.ttk import *
+import urllib
 from tkinter import messagebox
+from tkinter.ttk import *
+from urllib.request import urlopen
 
-import mttkinter as tk
-from src import ITwython
-from src import auth_gui
-from src import token_manager
+from PIL import Image, ImageTk
+
+import ITwython
+import auth_gui
+import logger_conf
+import path_finder
+import token_manager
+from ITwython import Tweet
+from lib import mttkinter as tk
+
+logger = logger_conf.Log.logger
 
 
-# from tkinter.ttk import *
+# TODO déplacer final dans App en staticmethod
+def final(fenetre, connectemporaire, oauth_verifier):
+    succes, login_credentials = connectemporaire.final(oauth_verifier)
+    if succes:
+        user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
+        logger.debug("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
+        token_manager.set_tokens(user_token, user_token_secret)
+        logger.debug(token_manager.get_all_tokens())
+        fenetre.destroy()
+    else:
+        # TODO Voir
+        logger.debug("Erreur à gérer")
 
 
 # Structure d'après
 # https://stackoverflow.com/questions/17466561/best-way-to-structure-a-tkinter-application
 # Classe qui hérite de Frame
-
-def final(fenetre, connectemporaire, oauth_verifier):
-    login_credentials = connectemporaire.final(oauth_verifier)
-    user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
-    print("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
-    token_manager.set_tokens(user_token, user_token_secret)
-    print(token_manager.get_all_tokens())
-    fenetre.destroy()
-
-
 class App(Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, stream_connection=True, static_connection=True, frozen=False):
+        """stream_connection et static_connection permettent d'activer ou de désactiver les deux types de connection
+         pour travailler ur la mise en page sans se faire bloquer par les limitations."""
         # On définit le cadre dans l'objet App (inutile car pas kwargs**...)
         Frame.__init__(self, parent)
         self.parent = parent
         self.parent.lift()
 
+        self.exist = True
+
+        self.frozen = frozen
+        self.stream_connection = stream_connection
+        self.static_connection = static_connection
+
+        style = Style()
+        style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TEntry", foreground="black", background="#343232", font=('Segoe UI', 10))
+        style.configure("TButton", font=('Segoe UI', 10))
+
+        style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
+        style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
+
         # Tant que les tokens n'existent pas alors ouvrir fenêtre de connexion
         if not token_manager.user_token_exist():
-            app_key, app_secret = token_manager.get_app_tokens()
+            logger.warning("User token does not exist !")
+            try:
+                app_key, app_secret = token_manager.get_app_tokens()
+            except TypeError as e:
+                logger.error("Impossible de trouver les tokens de l'application ! " + str(e))
+                messagebox.showerror(
+                    "Erreur",
+                    "Impossible de trouver les tokens de l'application !"
+                )
+                self.exist = False
+                self.parent.destroy()
+                return
             connectemp = ITwython.ConnecTemporaire(app_key, app_secret)
             auth_url = connectemp.auth_url
 
-            auth_window = auth_gui.FenetreConnexion(connectemp, auth_url).root
+            auth_window = auth_gui.FenetreConnexion(self, connectemp, auth_url)
             auth_window.grab_set()
             principal.wait_window(auth_window)
 
@@ -51,72 +87,108 @@ class App(Frame):
         # http://python-guide-pt-br.readthedocs.io/en/latest/writing/style/#unpacking
         self.app_key, self.app_secret, self.user_key, self.user_secret = token_manager.get_all_tokens()
         # Une fois qu'on a les tokens, créer la connexion
+
         self.connec = ITwython.Connec(self.app_key, self.app_secret, self.user_key, self.user_secret)
 
-        self.ajout_widget()
+        if self.connec.exist:
+            self.ajout_widget()
+        else:
+            if self.connec.erreur == "token_invalid":
+                messagebox.showwarning(
+                    "Impossible de se connecter à Twitter !",
+                    "Les identifiants de connexion sont invalides ou expirés, "
+                    "merci de réessayer."
+                )
+                token_manager.delete_tokens()
+            else:
+                messagebox.showerror(
+                    "Impossible de se connecter à Twitter !",
+                    "Vérifiez vos paramètres réseaux et réessayez."
+                )
+            self.exist = False
+            self.parent.destroy()
+            return
 
     def ajout_widget(self):
-        self.cadre_tweet = EnvoiTweet(self)
-        self.cadre_tweet.grid(column=0, row=0)
+        self.sidebar = Sidebar(self)
+        self.sidebar.grid(column=0, row=0, sticky="nse")
+        # self.sidebar.grid_propagate(0)
 
-        self.tl = TimeLine(self)
-        self.tl.grid(column=1, row=0)
+        self.cadre_tweet = EnvoiTweet(self)
+        self.cadre_tweet.grid(column=1, row=0)
+
+        self.tl = TimeLine(self, stream_connection=self.stream_connection, static_connection=self.static_connection)
+        self.tl.grid(column=2, row=0)
+
+        self.sidebar.grid_propagate(0)
+        self.sidebar.rowconfigure(0, weight=1)
 
 
 class EnvoiTweet(Frame):
     """Définit le cadre avec les widgets pour envoyer un tweet, ainsi que les fonctions pour répondre aux actions des
     boutons des widgets nécessaires (bouton envoyer...)"""
 
-    def __init__(self, parent):
-        print("Initialisation cadre : envoi de tweet")
+    def __init__(self, parent, static_connection=True):
+        logger.debug("Initialisation cadre : envoi de tweet")
         Frame.__init__(self, parent)
         self.parent = parent
-        self.connec = parent.connec
+
+        self.static_connection = static_connection
+
+        if static_connection:
+            self.connec = parent.connec
+        else:
+            self.connec = None
+
+        # On crée un cadre pour ajouter une marge égale
+        self.cadre = Frame(self)
+        self.cadre.grid(column=0, row=0, pady=10, padx=10)
 
         # On met en place le cadre d'envoi de tweet
         self.tweet_message = tk.StringVar()
         self.message_resultat = tk.StringVar()
 
-        # TODO Utiliser un champ Text
-        self.texte = Label(self, text="Nouveau tweet :")
-        self.tweet = Entry(self, textvariable=self.tweet_message)
-        self.bouton = Button(self, text="Tweeter", command=self.tweeter)
-        self.message = Label(self, textvariable=self.message_resultat)
+        # TODO Utiliser un champ Text de plusieurs lignes
+        self.label = Label(self.cadre, text="Nouveau tweet :")
+        self.tweet = Entry(self.cadre, textvariable=self.tweet_message)
+        self.bouton = Button(self.cadre, text="Tweeter", command=self.tweeter)
+        self.message = Label(self.cadre, textvariable=self.message_resultat)
 
-        self.texte.grid(column=0, row=0)
+        self.label.grid(column=0, row=0)
         self.tweet.grid(column=0, row=1)
         self.bouton.grid(column=0, row=2)
         self.message.grid(column=0, row=3)
 
     def tweeter(self):
-        # On récupère le message depuis le widget d'entrée de texte
+        # On récupère le message depuis le widget d'entrée de label
         message = self.tweet_message.get()
 
-        def action_async():
-            logger.info("Entering action")
+        # Si la connection est activé (pas debug)
+        if self.static_connection:
+            def action_async():
+                logger.debug("Tweet : Début action_async")
 
-            # On désactive l'entrée utilisateur pendant l'envoi du tweet
-            self.tweet.state(["disabled"])
-            self.bouton.state(["disabled"])
+                # On désactive l'entrée utilisateur pendant l'envoi du tweet
+                self.tweet.state(["disabled"])
+                self.bouton.state(["disabled"])
 
-            # On lance le tweet via ITwython
-            succes, msg = self.connec.tweeter(message)
+                # On lance le tweet via ITwython
+                succes, msg = self.connec.tweeter(message)
 
-            logger.debug("succes : " + str(succes))
-            logger.debug("msg : " + str(msg))
+                logger.debug("Tweet : Succès : " + str(succes))
+                logger.debug("Tweet : Message : " + str(msg))
 
-            # On lance les actions de retour
-            self.callback(succes, msg)
-            logger.warning("Action done")
+                # On lance les actions de retour
+                self.callback(succes, msg)
+                logger.debug("Tweet : Fin action_async")
+                return
 
-        # On lance l'action du tweet dans un thread asynchrone
-        th = threading.Thread(target=action_async)
-        th.start()
+            # On lance l'action du tweet dans un thread asynchrone
+            th = threading.Thread(target=action_async, daemon=True)
+            th.start()
 
     def callback(self, succes: bool, msg_):
-        """Éxecuté après l'envoi"""
-        logger.debug("Début callback")
-
+        """Éxecuté après l'envoi du tweet, pour afficher un message de confirmation ou d'erreur."""
         # Si le tweet a bien été envoyé
         if succes:
             self.message_resultat.set(msg_)
@@ -126,51 +198,77 @@ class EnvoiTweet(Frame):
                 "Impossible d'envoyer le tweet",
                 "Erreur : {0}".format(msg_)
             )
-
         # On réactive l'entrée utilisateur
         self.tweet.state(["!disabled"])
         self.bouton.state(["!disabled"])
-        logger.debug("Fin callback")
 
 
-class Tweet(Frame):
+class Sidebar(Frame):
+    def __init__(self, parent):
+        Frame.__init__(self, parent)
+        self.configure(style="Sidebar.TFrame", width=80)
+
+        self.cadre = Frame(self)
+        self.cadre.grid(column=0, row=0, pady=20, padx=20, sticky="s")
+
+        # Icones :
+        # On utilise le code hexadécimal obtenu ici
+        # https://docs.microsoft.com/en-us/uwp/api/Windows.UI.Xaml.Controls.Symbol
+        self.icone_utilisateur = Label(self.cadre, text=chr(int("E13D", 16)), font=('Segoe MDL2 Assets', 20),
+                                       style="Sidebar.TLabel")
+        self.icone_option = Label(self.cadre, anchor=tk.S, text=chr(int("E115", 16)), font=('Segoe MDL2 Assets', 20),
+                                  style="Sidebar.TLabel")
+
+        self.icone_utilisateur.grid(row=0, column=0, sticky="s", ipady=20)
+        self.icone_option.grid(row=1, column=0, sticky="s")
+
+        self.cadre.grid_columnconfigure(0, weight=3)
+
+
+class TweetGUI(Frame):
     """Cadre pour afficher un tweet unique."""
 
-    def __init__(self, parent, data):
-        print("Initialisation cadre : tweet")
+    def __init__(self, parent, tweet: Tweet):
+        logger.debug("Initialisation cadre : tweet")
         Frame.__init__(self, parent)
         self.parent = parent
         # self.connec = parent.connec
 
         # On met en place le cadre du tweet
-        self.data = data
+        self.tweet = tweet
 
-        screen_name = data["user"]["screen_name"].encode("utf-8").decode('utf-8')
-        name = data["user"]["name"].encode("utf-8").decode('utf-8')
-        status = data['text'].encode("utf-8").decode('utf-8')
-        date = data["created_at"].encode("utf-8").decode('utf-8')
+        screen_name = self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
+        name = self.tweet.user.name.encode("utf-8").decode('utf-8')
+        status = self.tweet.text.encode("utf-8").decode('utf-8')
+        date = self.tweet.created_at.encode("utf-8").decode('utf-8')
 
         # self.profile_image = Label(self, image=None)
         try:
-            self.status = Message(self, text=status, width=200)
+            self.status = tk.Message(self, text=status, width=380, foreground="white", background="#343232",
+                                     font=('Segoe UI', 10))
         except tk.TclError as e:
-            self.status = Message(self, text=status.encode("utf-8"), width=200)
-            print(e)
+            self.status = tk.Message(self, text=status.encode("utf-8"), width=380, foreground="white",
+                                     background="#343232", font=('Segoe UI', 10))
+            logger.error(e)
 
         try:
             self.name = Label(self, text=name)
         except tk.TclError as e:
-            print(e)
+            logger.error(e)
             self.name = Label(self, text=name.encode("utf-8"))
+
         try:
             self.screen_name = Label(self, text="@" + screen_name)
         except tk.TclError as e:
-            print(e)
+            logger.error(e)
+
         self.date = Label(self, text=date)
+
+        self.profile_picture = ProfilePictureGUI(self, self.tweet)
         # self.fav_count = Label(self, text="0")
         # self.rt_count = Label(self, text="1")
 
-        # self.profile_image.pack()
+        self.profile_picture.pack()
         self.name.pack()
         self.screen_name.pack()
         self.status.pack()
@@ -179,142 +277,168 @@ class Tweet(Frame):
         # self.rt_count.pack()
 
 
+class ProfilePictureGUI(Frame):
+    def __init__(self, parent, tweet: Tweet):
+        logger.debug("Initialisation cadre : photo de profil")
+        Frame.__init__(self, parent)
+
+        self.lien = tweet.user.profile_image_url
+
+        # TODO Fixer le lien si l'app est frozen
+        # On supprime les : et / de l'url pour en faire un nom de fichier
+        save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
+        # On obtient le répertoire de sauvegarde des photos
+        cache_dir = path_finder.PathFinder.get_cache_directory()
+        logger.debug("Dossier cache : " + cache_dir)
+
+        # On crée un string avec le lien absolu vers le fichier
+        self.save = cache_dir + "/" + save_relatif
+        logger.debug("Fichier cache : " + self.save)
+
+        # Si le fichier n'existe pas alors on le télécharge
+        if not os.path.isfile(self.save):
+            logger.debug("Téléchargement du fichier.")
+            try:
+                testfile = urllib.request.URLopener()
+                testfile.retrieve(self.lien, self.save)
+                # aa = "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"
+                # internal data file
+                # data_stream = io.BytesIO(aa)
+                # open as a PIL image object
+
+            except urllib.error.HTTPError as e:
+                logger.error("HTTP ERROR PROFILE PICTURE !" + str(e))
+                return
+
+        # TODO Ajouter exception pour ouverture fichier
+        self.pil_image = Image.open(self.save)
+        self.photo = ImageTk.PhotoImage(self.pil_image)
+
+        label = Label(self, image=self.photo)
+        label.pack(padx=5, pady=5)
+
+
 class TimeLine(Frame):
-    def __init__(self, parent):
-        print("Initialisation cadre : timeline")
+    def __init__(self, parent, stream_connection=True, static_connection=True):
+        logger.debug("Initialisation cadre : timeline")
         Frame.__init__(self, parent)
         self.parent = parent
 
+        self.online = stream_connection
+
         # J'ai mis le canvas en bleu pour bien voir là où il est : on est pas censé le voir mais juste le frame
         # On utilise un frame dans un canvas car pas de scrollbar sur le frame => scrollbar sur canvas
-        self.canvas = Canvas(self, borderwidth=0, width=210, background="blue")
+        self.canvas = tk.Canvas(self, borderwidth=0, width=400, background="blue")
         self.frame = Frame(self.canvas)
         self.scrollbar = Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         self.scrollbar.grid(column=1, row=0, sticky="nes")
         self.canvas.grid(column=0, row=0, sticky="nesw")
-        self.canvas.create_window((4, 4), window=self.frame,
+        self.canvas.create_window((0, 0), window=self.frame,
                                   tags="self.frame")
 
-        self.frame.bind("<Configure>", self.onFrameConfigure)
+        self.frame.bind("<Configure>", self.config_cadre)
 
         self.ligne = 0
 
-        self.streamer = ITwython.MyStreamer(self, parent.app_key, parent.app_secret,
-                                            parent.user_key, parent.user_secret)
+        if static_connection:
+            tweets_data = self.parent.connec.get_home_timeline(count=50)
+            # Example de réponse dans dev_assets/list_tweets
 
-        def async_stream():
-            # On utilise une autre notation que with="followings" car with est un mot clé réservé de python
-            # Sinon on doit modifier le fichier helper de la librairie twython => hack sale
-            # On utilise un unpacking avec double splat http://deusyss.developpez.com/tutoriels/Python/args_kwargs/
-            self.streamer.user(**{"with": "followings"})
+            # logger.debug(str(tweets_data).encode("utf-8"))
+            for tweet in tweets_data:
+                self.add_data(tweet)
 
-        # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
-        thread_tl = threading.Thread(target=async_stream, daemon=True)
-        thread_tl.start()
+        if stream_connection:
+            self.streamer = ITwython.MyStreamer(self, parent.app_key, parent.app_secret,
+                                                parent.user_key, parent.user_secret)
 
+            def async_stream():
+                # On utilise une autre notation que with="followings" car with est un mot clé réservé de python
+                # Sinon on doit modifier le fichier helper de la librairie twython => hack peu pratique
+                # On utilise un unpacking avec double splat http://deusyss.developpez.com/tutoriels/Python/args_kwargs/
+                self.streamer.user(**{"with": "followings"})
+                return
+                # TODO voir si ça marche le return
+
+            # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
+            thread_tl = threading.Thread(target=async_stream, daemon=True)
+            thread_tl.start()
 
         # À utiliser pour debuguer, il faut commenter tout ce qui est async et connexion
-        # self.peupler()
+        if not static_connection and not stream_connection:
+            self.peupler()
 
     def peupler(self):
         """Ajoute de fausses données pour travailler sur la mise en page hors-ligne,"
         " pour empecher de se faire bloquer par Twitter à force de recréer des connexions."""
-        data = [
-            {
-                "text": "Franklin sait faire ses lacets et compter jusqu'à dix.",
-                "created_at": "Le 38 mai",
-                'user': {"screen_name": "sofolichon", "name": "Poutou <3"}},
-            {
-                "text": "123456789012345678901234567890123456789012345678901234"
-                        "5678901234567890123456789012345678901234567890",
-                "created_at": "19 janvier 2901",
-                'user': {"screen_name": "PPDA", "name": "Patrick"}},
-            {
-                "text": "ONE TWO THREE, VIVA L'ALGERIE",
-                "created_at": "1er mai 2000",
-                'user': {"screen_name": "Karisss", "name": "Mastik"}},
-            {
-                "text": "Lorem ipsum, j'aime les grenouilles, mange ma quenouille",
-                "created_at": "Le 20 avril",
-                'user': {"screen_name": "Kmi", "name": "Grand fou"}},
-            {
-                "text": "Ça marche aussi avec les messages qui se rapprochent de 140 caractères ou,"
-                        "encore mieux, ceux qui font exactement cent-quarante caractères !",
-                "created_at": "15/04/2017 18:49",
-                'user': {"screen_name": "DUGNYCHON", "name": "Gabi"}}
-        ]
+        try:
+            if self.parent.frozen:
+                import list_tweets
+            else:
+                from dev_assets import list_tweets
+            liste = list_tweets.list
 
-        # On ajoute les données normalement
-        for fake_tweet in data:
-            self.add_data(fake_tweet)
+            # On ajoute les données normalement
+            for fake_tweet in liste:
+                self.add_data(fake_tweet)
+        except ImportError as e:
+            logger.error("Impossible d'importer le stock de tweets ! " + str(e))
 
     def add_data(self, data):
-        """Ajoute un objet Tweet à la TimeLine."""
+        """Ajoute un objet TweetGUI à la TimeLine à partir de données brutes."""
         if 'text' in data:
-            tweet = Tweet(self.frame, data)
+            tweet = TweetGUI(self.frame, Tweet(data))
             tweet.grid(row=self.ligne, column=0)
-            print(self.ligne)
+            logger.debug(self.ligne)
             self.ligne = self.ligne + 1
             # self.scrollbar.grid_configure(rowspan=self.ligne + 1)
 
-    def onFrameConfigure(self, event):
-        """Reset the scroll region to encompass the inner frame."""
+    def add_tweet(self, tweet: TweetGUI):
+        tweet.grid(row=self.ligne, column=0)
+        logger.debug(self.ligne)
+        self.ligne = self.ligne + 1
+
+    def config_cadre(self, event):
+        # TODO Bloquer scroll à la fin
+        logger.debug("Reconfiguration Cadre TimeLine : " + str(event))
+        logger.debug(self.scrollbar.get())
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-
-# class Pri():
-#     def __init__(self):
-#         if True:
-#             gui = auth_gui.fenetreconnexion()
-#             gui.mainloop()
-#
-#     def maint(self):
-#         principal = Tk()
-#         principal.title("TwISN")
-#         principal.config(bg='white')
-#         # on ne travaille pas directement dans principal
-#         # mais on utilise un cadre (Objet App)
-#
-#
-#         App(principal).pack(side="top", fill="both", expand=True)
-#         principal.mainloop()
+        logger.debug(self.scrollbar.get())
 
 
 # On commence le code ici
 if __name__ == "__main__":
-    # On crée un logger : c'est pour gérer les logs de l'application
-    # Je vais essayer de remplacer tous les print() par des logger.info() ou logger.warning() etc
-    # Ca permet plus de clarté (ce qui est normal ou pas...) et de mettre dans un fichier
-    # Ca permet aussi d'avoir le moment précis de tel ou tel message pour savoir où on en est dans le code (pratique!)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-
-    ch = logging.StreamHandler(stdout)
-    ch.setLevel(logging.DEBUG)
-
-    f = logging.FileHandler("twisn.log", mode="w")
-    f.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(funcName)s in %(filename)s] : %(message)s")
-    formatter.datefmt = "%H:%M:%S"
-    ch.setFormatter(formatter)
-    f.setFormatter(formatter)
-
-    logger.addHandler(ch)
-    logger.addHandler(f)
-
-    # Fin de la définition du logger
+    logger.info("Démarrage de TwISN")
 
     # Principal est la racine de l'app
     principal = tk.Tk()
     principal.title("TwISN")
     principal.config(bg='white')
 
-    # on ne travaille pas directement dans principal
-    # mais on utilise un cadre (Objet App)
+    # Récupération du chemin de l'icone et de l'état de l'applciation:
+    frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()
 
-    App(principal).grid(sticky="nsew")
+    # On charge l'icone
+    icon = tk.PhotoImage(file=chemin_absolu)
+    # Ajoutée dans le gestionnaire de fenêtre Windows
+    principal.tk.call('wm', 'iconphoto', principal._w, icon)
+
+    # On ne travaille pas directement dans principal (objet Tk)
+    # Mais on utilise un cadre (Objet App qui hérite de Frame)
+    # stream_connection et static_connnection sont utilisées pour bloquer les connexions
+    # pendant le développement de l'application
+    app = App(principal, stream_connection=False, static_connection=True, frozen=frozen)
+
+    # On vérifie que l'application n'a pas été supprimée avec une erreur
+    if app.exist:
+        app.grid(sticky="nsew")
+        app.columnconfigure(1, weight=1)
+        app.rowconfigure(0, weight=1)
+
     principal.mainloop()
-    logging.info("TWISN CLOSED")
+    app.quit()
+    principal.quit()
+    logger.info("Fermeture de TwISN")
+    sys.exit()

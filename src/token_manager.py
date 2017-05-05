@@ -1,142 +1,150 @@
 import base64
-import os.path
+import binascii
+import os
+
+import logger_conf
+import path_finder
+
+logger = logger_conf.Log.logger
 
 # ATTENTION!
 # Ne pas appeler le module "token" car ça override le module token de python et crée des erreurs
 
 
-# TODO Vérifier sur d'autres OS
 # Code nécessaire car le chemin était différent si lancé depuis token_manager
-# ou depuis main_app avec l'ancienne implantation
-chemin_relatif = "/../data/secrets"
-chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
+# ou depuis main_app avec l'ancienne implantation ou en .exe
+chemin_app_tokens = path_finder.PathFinder.get_app_tokens_file()
+chemin_user_tokens = path_finder.PathFinder.get_user_tokens_file()
 
 
 def get_all_tokens() -> list:
     """
-    Renvoie les 4 tokens (app et usr) stockés dans un fichier, dans une liste :
+    Renvoie les 4 tokens (app et usr) stockés dans 2 fichiers, dans une liste :
     TWITTER_APP_KEY, TWITTER_APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
     """
-    try:
-        with open(chemin_absolu, 'r') as f:
-            data = f.readlines()
-            decoded = _decoder(data)
-    except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return decoded
+    app_tokens = get_app_tokens()
+    user_tokens = get_user_tokens()
+    return app_tokens + user_tokens
 
 
 def get_app_tokens() -> list:
     """
-    Renvoie les 4 tokens (app et usr) stockés dans un fichier, dans une liste :
-    TWITTER_APP_KEY, TWITTER_APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
+    Renvoie les 2 tokens (app et usr) stockés dans un fichier, dans une liste :
+    TWITTER_APP_KEY, TWITTER_APP_SECRET,
     """
     try:
-        with open(chemin_absolu, 'r') as f:
-            l = []
-            for i in range(2):
-                l.append(f.readline())
-            decoded = _decoder(l)
-    except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return decoded
+        if os.path.isfile(chemin_app_tokens):
+            with open(chemin_app_tokens, 'r') as f:
+                l = []
+                for i in range(2):
+                    l.append(f.readline())
+                decoded = _decoder_liste(l)
+            return decoded
+        else:
+            logger.error("Pas de fichier '{0}' !".format(chemin_app_tokens))
+            return ["", ""]
+    except IOError as e:
+        logger.error("Erreur ! Le fichier n'a pas pu être ouvert : " + e)  # on verifie si le fichier existe
+        return ["", ""]
 
 
-# On spécifie que les arguments sont des str et que la fonction renvoie un bool
+def get_user_tokens() -> list:
+    """
+    Renvoie les 2 tokens (app et usr) stockés dans un fichier, dans une liste :
+    OAUTH_TOKEN, OAUTH_TOKEN_SECRET
+    """
+    try:
+        if os.path.isfile(chemin_user_tokens):
+            with open(chemin_user_tokens, 'r') as f:
+                l = []
+                for i in range(2):
+                    l.append(f.readline())
+                decoded = _decoder_liste(l)
+            return decoded
+        else:
+            logger.warning("Pas de fichier '{0}' !".format(chemin_user_tokens))
+            return ["", ""]
+    except IOError as e:
+        logger.error("Erreur ! Le fichier n'a pas pu être ouvert : " + e)  # on verifie si le fichier existe
+        return ["", ""]
+
+
 def set_tokens(token1: str, token2: str) -> bool:
+    # Doc : il faut utiliser with
     # http://python-guide-pt-br.readthedocs.io/en/latest/writing/style/#read-from-a-file
     try:
-        with open(chemin_absolu, 'r+') as f:
-            data = f.readlines()
-            if len(data) == 4:
-                data[2] = _encoder(token1)
-                data[3] = _encoder(token2)
-                # print(data)
-            elif len(data) == 2:
-                data.append(_encoder(token1))
-                data.append(_encoder(token2))
-                # print(data)
-            else:
-                print("WARNING ! TOKEN FILE NOT SUPPORTED ! ")
-            f.truncate(0)  # on efface le contenu du fichier
-            f.writelines(data)  # puis on ecrit le nouveau contenu
-    except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return True
+        with open(chemin_user_tokens, 'w') as f:
+            f.write(_encoder(token1))
+            f.write(_encoder(token2))
+            return True
+    except IOError as e:
+        logger.error("Erreur ! Le fichier n'a pas pu être ouvert : " + e)
+        return False
+
+
+def delete_tokens():
+    """Permet de supprimer les tokens de l'utilisateur, s'ils ne sont plus valables par exemple."""
+    if os.path.isfile(chemin_user_tokens):
+        os.remove(chemin_user_tokens)
 
 
 def user_token_exist() -> bool:
     """Renvoie True si les tokens app et usr sont sauvegardés."""
-    try:
-        with open(chemin_absolu, 'r') as f:
-            data = f.readlines()
-            if len(data) < 4:
-                return False
-            elif len(data) == 4:
-                return True
-    except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
+    if os.path.isfile(chemin_user_tokens):
+        return True
+    else:
+        return False
 
 
 # crypte les str par lequelles on va remplacer les usertokens
 def _encoder(texte: str) -> str:
     encoded = (base64.encodebytes(texte.encode('ascii'))).decode('unicode_escape')
+    encoded = encoded.replace("=", "")
     return encoded
 
-# décrypte chaque élément de la liste dans une nouvelle liste
-def _decoder(liste: list) -> list:
-    # TODO Ajouter mécanisme pour enlever les = (et les rajouter) voir lien :
+
+def _decoder_string(element: str) -> str:
+    element = element.replace('\n', '').replace('\r', '')
+    missing_padding = 4 - ((len(element)) % 4)
+    if missing_padding != 0:
+        element += '=' * missing_padding
+    try:
+        element = (base64.decodebytes(element.encode())).decode('unicode_escape')
+        return element
+    except binascii.Error as e:
+        return ""
+
+
+# Décrypte chaque élément de la liste dans une nouvelle liste
+def _decoder_liste(liste: list) -> list:
+    """Décode une liste de strings en base 64."""
     # http://stackoverflow.com/questions/2941995/python-ignore-incorrect-padding-error-when-base64-decoding
-    for i in range(len(liste)):
-        missing_padding = len(liste[i]) % 4 #on regarde si c'est un multiple de 4
-        if missing_padding == 3:
-            liste[i] += 'A=='
-        elif missing_padding == 1 or missing_padding == 2:
-            liste[i] += '=' * missing_padding
-        liste[i] = (base64.decodebytes(liste[i].encode())).decode('unicode_escape')
-    return liste
+    resultat = []
+    for element in liste:
+        resultat.append(_decoder_string(element))
+    return resultat
+
 
 def _set_app_tokens(token1: str, token2: str) -> bool:
-    """Permet de changer les tokens app qui sont stockés dans un fichier. Maintenance uniquement"""
+    """Permet de changer les tokens app qui sont stockés dans un fichier. Utilisée uniquement pour la maintenance."""
     try:
-        with open(chemin_absolu, 'r+') as f:
+        with open(chemin_app_tokens, 'r+') as f:
             data = f.readlines()
             data[0] = _encoder(token1)
             data[1] = _encoder(token2)
             f.truncate(0)  # on efface le contenu du fichier
             f.writelines(data)  # puis on ecrit le nouveau contenu
-    except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return True
+            return True
+    except IOError as e:
+        logger.debug("Erreur ! Le fichier n'a pas pu être ouvert : " + e)  # on verifie si le fichier existe
+        return False
 
-
-def _compterligne():
-    try:
-        with open(chemin_absolu, 'r') as f:
-            nb_ligne = 0
-            for line in f:
-                nb_ligne += 1
-    except IOError:
-        print("Erreur! Le fichier n'a pas pu être ouvert")  # on verifie si le fichier existe
-    return nb_ligne
-
-
-##    missing_padding = len(liste) % 4 #on regarde si c'est un multiple de 4
-##    if missing_padding != 0:
-##        liste[i] += b'='* (4 - missing_padding) #si non alors on ajoute des '=' pour quil le devienne
-##    idée pour les '=' a ajouter/retirer, ne fonctionne pas, message d'erreur :
-##    TypeError: Can't convert 'bytes' object to str implicitly
-##missing_padding = len(liste) % 4 #on regarde si c'est un multiple de 4
-##if missing_padding == 3:
-##    data += b'A=='
-##elif missing_padding == 1or missing_padding == 2:
-##    data += b'=' * missing_padding 
 
 # Tests
 if __name__ == "__main__":
-    print(get_all_tokens())
-    a = input("Token 0 :")
-    b = input("Token 1 :")
+    logger.info(get_all_tokens())
+    a = input("App Token 0 :")
+    b = input("App Token 1 :")
     set_tokens(a, b)
-    print(get_all_tokens())
-    print(compterligne())
+    # set_tokens(a,b)
+    logger.info(get_all_tokens())
