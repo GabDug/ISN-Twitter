@@ -24,7 +24,7 @@ Here is some documentation from Microsoft :
     - Guidelines for forms layout page 305
 
 ## Setup
-Put the tokens in a file "secrets", as explained in the "secret_example" file
+Put the tokens in a file "assets/app_tokens", as explained in the "assets/app_tokens" file
 
 ## License
 
