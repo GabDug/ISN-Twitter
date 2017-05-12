@@ -8,6 +8,9 @@ secrets
 =======
 data/secrets
 data/*
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 secret
 passwords.*
@@ -77,3 +80,5 @@ docs/_build/
 # PyBuilder
 target/
 /data/cache/
+/data/cache/Thumbs.db
+Thumbs.db
