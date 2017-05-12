@@ -104,7 +104,7 @@ def _encoder(texte: str) -> str:
 
 
 def _decoder_string(element: str) -> str:
-    element = element.replace('\n', '').replace('\r', '')
+    element = element.replace('\n', '').replace('\r', '').replace(' ', '')
     missing_padding = 4 - ((len(element)) % 4)
     if missing_padding != 0:
         element += '=' * missing_padding
