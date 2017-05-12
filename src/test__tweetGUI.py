@@ -1,19 +1,14 @@
 import os
-import threading
 import tkinter as tk
 import urllib
 from tkinter import *
-from tkinter import messagebox
 from tkinter.ttk import *
 from urllib.request import urlopen
 
 from PIL import Image, ImageTk
 
-
-import path_finder
 import logger_conf
-import tkinter as tk
-from tkinter.ttk import *
+import path_finder
 
 logger = logger_conf.Log.logger
 
@@ -46,37 +41,36 @@ class TweetGUI(Frame):
     """Cadre pour afficher un tweet unique."""
 
     def __init__(self, parent):
-        
+
         Frame.__init__(self, parent)
 
         style = Style()
         style.configure("Test.TFrame", foreground="white", background="blue", font=('Segoe UI', 10))
-        style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10)) 
-        style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10)) 
+        style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
-        style.configure("TButton", font=('Segoe UI', 10)) 
+        style.configure("TButton", font=('Segoe UI', 10))
 
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
-        style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10)) 
+        style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
 
         self.parent = parent
         # self.connec = parent.connec
 
         # On met en place le cadre du tweet
 
-        screen_name = "DUGNYCHON"#self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
-        name = 'Gabi'#self.tweet.user.name.encode("utf-8").decode('utf-8')
-        status = 'Quentin il est vraiment trop fort il me rend fier felicitez le pour moi ptn'#self.tweet.text.encode("utf-8").decode('utf-8')
-        date = '04/05/2017 10:20'#'self.tweet.created_at.encode("utf-8").decode('utf-8')
+        screen_name = "DUGNYCHON"  # self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
+        name = 'Gabi'  # self.tweet.user.name.encode("utf-8").decode('utf-8')
+        status = 'Quentin il est vraiment trop fort il me rend fier felicitez le pour moi ptn'  # self.tweet.text.encode("utf-8").decode('utf-8')
+        date = '04/05/2017 10:20'  # 'self.tweet.created_at.encode("utf-8").decode('utf-8')
 
         # self.profile_image = Label(self, image=None)
         try:
             self.status = tk.Message(self, text=status, width=100, foreground="white", background="#343232",
-                                  font=('Segoe UI', 10))
+                                     font=('Segoe UI', 10))
         except tk.TclError as e:
             self.status = tk.Message(self, text=status.encode("utf-8"), width=380, foreground="white",
-                                  background="#343232", font=('Segoe UI', 10))
-  
+                                     background="#343232", font=('Segoe UI', 10))
 
         try:
             self.name = Label(self, text=name)
@@ -86,7 +80,7 @@ class TweetGUI(Frame):
         try:
             self.screen_name = Label(self, text="@" + screen_name)
         except tk.TclError as e:
-           pass
+            pass
 
         self.date = Label(self, text=date)
 
@@ -113,16 +107,16 @@ class TweetGUI(Frame):
                 print("HTTP ERROR PROFILE PICTURE !" + str(e))
                 return
 
-        cadre1 = Frame(self, cursor = 'dot', width = 500, height = 500, style= "TEntry")
-        cadre1.grid(column=0, row=0, rowspan=5, columnspan=5, padx = 5, pady = 5)
+        cadre1 = Frame(self, cursor='dot', width=500, height=500, style="TEntry")
+        cadre1.grid(column=0, row=0, rowspan=5, columnspan=5, padx=5, pady=5)
 
-        cadre2 = Frame(self, cursor = 'arrow',width = 100, height = 100, style= "Test.TFrame")
-        cadre2.grid(column=0, row=0, rowspan = 2, padx = 20, pady = 20, sticky = 'N')
+        cadre2 = Frame(self, cursor='arrow', width=100, height=100, style="Test.TFrame")
+        cadre2.grid(column=0, row=0, rowspan=2, padx=20, pady=20, sticky='N')
 
-        separateur = Frame(self, width = 500, height = 8)
-        separateur.grid(column=0, row=6, columnspan = 5)
+        separateur = Frame(self, width=500, height=8)
+        separateur.grid(column=0, row=6, columnspan=5)
 
-        #self.profile_picture = ProfilePictureGUI(self)
+        # self.profile_picture = ProfilePictureGUI(self)
         self.image = Image.open(self.save)
         self.profile_picture = ImageTk.PhotoImage(self.image)
         label = Label(self, image=self.profile_picture)
@@ -133,16 +127,15 @@ class TweetGUI(Frame):
         self.name = Label(self, text='Gabigabigoooo a dit:')
         self.screen_name = Label(self, text='@DUGNYCHON_DIVIN')
 
-        label.grid(column = 0,row = 0, pady = 30, rowspan=2, sticky = 'N')
-        self.name.grid(column = 1,row = 0, pady = 30, sticky = 'N')
-        self.screen_name.grid(column = 1,row = 0, pady = 5)
-        self.status.grid(column = 2,row = 1,sticky = 'N')
-        self.date.grid(column = 3,row = 3,sticky = '')
-        
-        self.likes_count.grid(column = 1, row = 5, pady = 2)
-        self.fav_count.grid(column = 2, row = 5, pady = 2)
-        self.rt_count.grid(column = 3, row = 5, pady = 2)
+        label.grid(column=0, row=0, pady=30, rowspan=2, sticky='N')
+        self.name.grid(column=1, row=0, pady=30, sticky='N')
+        self.screen_name.grid(column=1, row=0, pady=5)
+        self.status.grid(column=2, row=1, sticky='N')
+        self.date.grid(column=3, row=3, sticky='')
 
+        self.likes_count.grid(column=1, row=5, pady=2)
+        self.fav_count.grid(column=2, row=5, pady=2)
+        self.rt_count.grid(column=3, row=5, pady=2)
 
 
 class ProfilePictureGUI(Frame):
@@ -150,7 +143,7 @@ class ProfilePictureGUI(Frame):
         logger.debug("Initialisation cadre : photo de profil")
         Frame.__init__(self, parent)
 
-        #self.lien = tweet.user.profile_image_url
+        # self.lien = tweet.user.profile_image_url
         self.lien = 'https://pbs.twimg.com/profile_images/1673907275/image.jpg'
 
         # TODO Fixer le lien si l'app est frozen
@@ -186,10 +179,9 @@ class ProfilePictureGUI(Frame):
         label = Label(self, image=self.photo)
         label.pack(padx=5, pady=5)
 
-if __name__=='__main__' :
+
+if __name__ == '__main__':
     t = tk.Tk()
     tweet = TweetGUI(t)
     tweet.pack()
     t.mainloop()
-
-
