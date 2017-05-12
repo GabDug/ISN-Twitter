@@ -2,14 +2,14 @@ import os
 import threading
 import tkinter as tk
 import urllib
-import webbrowser
 from tkinter.ttk import *
 
 from PIL import Image, ImageTk
+from dev_assets import user_example
 
-from ITwython import Tweet, User
 import logger_conf
 import path_finder
+from ITwython import User
 
 logger = logger_conf.Log.logger
 
@@ -18,11 +18,11 @@ logger = logger_conf.Log.logger
 
 
 class ProfilePictureGUI(Frame):
-    def __init__(self, parent, tweet: Tweet):
+    def __init__(self, parent, user):
         logger.debug("Initialisation cadre : photo de profil")
         Frame.__init__(self, parent)
 
-        self.lien = tweet.user.profile_image_url
+        self.lien = user.profile_image_url
 
         # TODO Fixer le lien si l'app est frozen
         # On supprime les : et / de l'url pour en faire un nom de fichier
@@ -35,11 +35,10 @@ class ProfilePictureGUI(Frame):
         self.save = cache_dir + "/" + save_relatif
         logger.debug("Fichier cache : " + self.save)
 
-
         def action_async():
             # Si le fichier n'existe pas alors on le télécharge
             if not os.path.isfile(self.save):
-                logger.debug("Téléchargement du fichier : "+self.save)
+                logger.debug("Téléchargement du fichier : " + self.save)
                 try:
                     testfile = urllib.request.URLopener()
                     testfile.retrieve(self.lien, self.save)
@@ -61,7 +60,6 @@ class ProfilePictureGUI(Frame):
 
         thread_tl = threading.Thread(target=action_async, daemon=True)
         thread_tl.start()
-
 
 
 class FenetreUtilisateur(tk.Toplevel):
@@ -95,41 +93,70 @@ class FenetreUtilisateur(tk.Toplevel):
         cadre.grid(row=0, column=0, padx=40, pady=20)
 
         cadre_titre = Frame(cadre)
-        cadre_titre.grid(row=0, column=0)
+        cadre_titre.grid(row=0, column=1)
 
-        nom_long = Label(cadre_titre, text="Gabriel Dugny",
-                         font=('Segoe UI Semilight', 24))
-        nom_at = Label(cadre_titre, text="@DUGNYCHON",
-                       font=('Segoe UI Semilight', 18))
+        name = self.utilisateur.name
+        screen_name = self.utilisateur.screen_name
+
+        try:
+            nom_long = Label(cadre_titre, text=name, font=('Segoe UI Semilight', 24))
+        except tk.TclError as e:
+            logger.error(e)
+            nom_long = Label(cadre_titre, text=name.encode("utf-8"), font=('Segoe UI Semilight', 24))
+
+        try:
+            nom_at = Label(cadre_titre, text="@" + screen_name, font=('Segoe UI Semilight', 18))
+        except tk.TclError as e:
+            logger.error(e)
+            nom_at = Label(cadre_titre, text=screen_name.encode("utf-8"),  font=('Segoe UI Semilight', 18))
+        # nom_long = Label(cadre_titre, text="Gabriel Dugny",
+        #                  font=('Segoe UI Semilight', 24))
+        # nom_at = Label(cadre_titre, text="@DUGNYCHON",
+        #                font=('Segoe UI Semilight', 18))
         nom_long.grid(column=0, row=0, sticky="w", pady=10)
         nom_at.grid(column=1, row=0, sticky="ws", pady=10)
 
         cadre_description = Frame(cadre)
-        cadre_description.grid(row=1, column=0, pady=10)
+        cadre_description.grid(row=1, column=1, pady=10)
 
-        description = Label(cadre_description, text="Mec super cool.\nPas responsable du cool.")
-        localisation = Label(cadre_description, text="Paris, France")
+        description = self.utilisateur.description
+        location = self.utilisateur.location
+        try:
+            description = Label(cadre_description, text=description)
+        except tk.TclError as e:
+            logger.error(e)
+            description = Label(cadre_description, text=description.encode("utf-8"))
+
+        try:
+            location = Label(cadre_description, text="@" + location)
+        except tk.TclError as e:
+            logger.error(e)
+            location = Label(cadre_description, text=location.encode("utf-8"))
+        # description = Label(cadre_description, text="Mec super cool.\nPas responsable du cool.")
+        # location = Label(cadre_description, text="Paris, France")
 
         description.grid(row=0, column=0, sticky="w")
-        localisation.grid(row=1, column=0, sticky="w")
-
+        location.grid(row=1, column=0, sticky="w")
 
         cadre_compteurs = Frame(cadre)
-        cadre_compteurs.grid(row=2, column=0,sticky="ws")
+        cadre_compteurs.grid(row=2, column=0, sticky="ws")
 
         message_tweets = Label(cadre_compteurs, text="Tweets")
-        compteur_tweets = Label(cadre_compteurs, text="10 568")
+        compteur_tweets = Label(cadre_compteurs, text=self.utilisateur.statuses_count)
 
         message_abonnements = Label(cadre_compteurs, text="Abonnements")
-        compteur_abonnements = Label(cadre_compteurs, text="208")
+        compteur_abonnements = Label(cadre_compteurs, text=self.utilisateur.friends_count)
 
         message_abonnes = Label(cadre_compteurs, text="Abonnés")
-        compteur_abonnes = Label(cadre_compteurs, text="569")
+        compteur_abonnes = Label(cadre_compteurs, text=self.utilisateur.followers_count)
         #
         # message_info_2 = Label(cadre, text="Vous obtiendrez ainsi un code à usage unique pour vous connecter à TwISN.")
         # frame_code = Frame(cadre)
         #
         # bouton = Button(cadre, command=self.connexion, text="Connexion")
+
+        self.profile_picture = ProfilePictureGUI(cadre, self.utilisateur)
+        self.profile_picture.grid(row=0, column=0, rowspan=2, sticky="w")
 
         nom_long.grid(column=0, row=0, sticky="w", pady=10)
         nom_at.grid(column=1, row=0, sticky="w", pady=10)
@@ -142,28 +169,12 @@ class FenetreUtilisateur(tk.Toplevel):
         message_abonnes.grid(row=0, column=2, sticky="w")
         compteur_abonnes.grid(row=1, column=2, sticky="w")
 
-        # frame_code.grid(row=3, column=0, columnspan=2, sticky="w", pady=20)
-        # bouton.grid(row=5, column=0, sticky="e", columnspan=2)
-
-    def ouverture_lien(self):
-        if not self.test:
-            webbrowser.open_new(self.pin_link)
-
-    def connexion(self):
-        from main_app import final
-        logger.debug("Code entré : " + str(self.pin_variable.get()))
-
-        # Si on n'est pas en train de faire la mise en page (pas debug)
-        if not self.test:
-            final(self, self.connec_temporaire, self.pin_variable.get())
-        self.destroy()
-
 
 # Permet d'éxécuter le code uniquement si lancé
 # Pour tester
 if __name__ == "__main__":
     root = tk.Tk()
-    r = FenetreUtilisateur(root, None, test=True)
+    r = FenetreUtilisateur(root, User(user_example.c), test=True)
     r.grab_set()
     # root.call('tk', 'scaling', 2.0)
     root.mainloop()

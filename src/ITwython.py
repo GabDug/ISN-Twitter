@@ -19,8 +19,15 @@ class User:
         self.name = data["name"]
         self.screen_name = data["screen_name"]
 
+        self.description = data["description"]
+        self.location = data["location"]
+
         self.profile_image_url_normal = data["profile_image_url"]
         self.profile_image_url = self.profile_image_url_normal.replace("_normal", "")
+
+        self.followers_count = data["followers_count"]
+        self.friends_count = data["friends_count"]
+        self.statuses_count = data["statuses_count"]
 
         self.profile_banner_url = data["profile_banner_url"]
         # TODO Ajouter tous les cas possibles et pas crasher si un élément pas présent
