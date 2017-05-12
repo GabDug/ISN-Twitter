@@ -1,4 +1,3 @@
-import os.path
 import tkinter as tk
 import webbrowser
 from tkinter.ttk import *
@@ -7,10 +6,6 @@ import logger_conf
 import path_finder
 
 logger = logger_conf.Log.logger
-
-# TODO Ajouter les ressources de aut_gui à path_finder
-chemin_relatif = "/../assets/Twitter_Logo_Blue_Cropped.png"
-chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
 
 
 # TODO Faire menu clic droit pour copier/coller
@@ -49,13 +44,6 @@ class FenetreConnexion(tk.Toplevel):
 
         titreconnexion = Label(cadre, text="Connexion",
                                font=('Segoe UI Semilight', 24))
-
-        # logophoto = tk.PhotoImage(file=chemin_app_tokens)
-        # logo = Label(cadre, width=11, image=logophoto, style="BW.TLabel")
-        # logo.image = logophoto
-        #
-        # cadretexte = Frame(cadre)
-        # cadretexte.grid(row=2, column=0, columnspan=2)
 
         message_info_1 = Label(cadre,
                                text="Vous devez vous connecter sur twitter.com dans la page qui vient de s'ouvrir. ")
