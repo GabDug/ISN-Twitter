@@ -224,7 +224,7 @@ class Sidebar(Frame):
 
         self.cadre.grid_columnconfigure(0, weight=3)
 
-
+'''
 class TweetGUI(Frame):
     """Cadre pour afficher un tweet unique."""
 
@@ -275,6 +275,168 @@ class TweetGUI(Frame):
         self.date.pack()
         # self.fav_count.pack()
         # self.rt_count.pack()
+'''
+
+class TweetGUI(Frame):
+    """Cadre pour afficher un tweet unique."""
+
+    def __init__(self, parent, tweet: Tweet):
+        logger.debug("Initialisation cadre : tweet")
+        Frame.__init__(self, parent)
+
+        style = Style()
+        style.configure("Test.TFrame", foreground="white", background="blue", font=('Segoe UI', 10))
+        style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
+        style.configure("TButton", font=('Segoe UI', 10))
+
+        style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
+        style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
+
+        self.parent = parent
+        # self.connec = parent.connec
+        self.tweet = tweet
+        # On met en place le cadre du tweet
+
+        screen_name = self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
+        name = self.tweet.user.name.encode("utf-8").decode('utf-8')
+        #TODO mettre une limite de caractere ? (pour ne pas avoir de probleme avec laffichage
+        status = self.tweet.text.encode("utf-8").decode('utf-8')
+        date = self.tweet.created_at.encode("utf-8").decode('utf-8')
+
+        # self.profile_image = Label(self, image=None)
+        try:
+            self.status = tk.Message(self, text=status, width=320, foreground="white", background="#343232",
+                                     font=('Segoe UI', 10))
+        except tk.TclError as e:
+            self.status = tk.Message(self, text=status.encode("utf-8"), width=380, foreground="white",
+                                     background="#343232", font=('Segoe UI', 10))
+
+        try:
+            self.name = Label(self, text=name)
+        except tk.TclError as e:
+            self.name = Label(self, text=name.encode("utf-8"))
+
+        try:
+            self.screen_name = Label(self, text="@" + screen_name)
+        except tk.TclError as e:
+            pass
+
+        self.date = Label(self, text=date)
+
+        self.lien = "https://pbs.twimg.com/profile_images/817042499134980096/LTpqSDMM_bigger.jpg"
+        save_relatif = self.lien.replace(":", "").replace("/", "")
+        cache_dir = ""
+        # On crée un string avec le lien absolu vers le fichier
+        self.save = save_relatif
+
+        if os.path.isfile(self.save):
+            print("File already exists ! ")
+        # Sinon on le télécharge
+        else:
+
+            try:
+                testfile = urllib.request.URLopener()
+                testfile.retrieve(self.lien, self.save)
+                # aa = "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"
+                # internal data file
+                # data_stream = io.BytesIO(aa)
+                # open as a PIL image object
+
+            except urllib.error.HTTPError as e:
+                print("HTTP ERROR PROFILE PICTURE !" + str(e))
+                return
+
+        Cadre1 = Frame(self, cursor='dot', width=500, height=50, style="TLabel")
+        Cadre1.grid(column=0, row=5, columnspan=5, padx=0, pady=0, sticky='')
+
+        cadre2 = Frame(self, cursor='arrow', width=100, height=100, style="Test.TFrame")
+        cadre2.grid(column=0, row=0, rowspan=2, padx=20, pady=20, sticky='N')
+
+        separateur = Frame(self, width=500, height=8)
+        separateur.grid(column=0, row=6, columnspan=5)
+
+        # self.profile_picture = ProfilePictureGUI(self)
+        self.image = Image.open(self.save)
+        self.profile_picture = ImageTk.PhotoImage(self.image)
+        image = Label(self, image=self.profile_picture)
+
+        self.likes_count = Label(self, text="                 ")
+        self.fav_count = Label(self, text="              : 1")
+        self.icone_fav_off = Label(Cadre1, text=chr(int("E1CE", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.icone_fav_on = Label(Cadre1, text=chr(int("E1CF", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.rt_count = Label(self, text="            : 1")
+        # self.icone_like_off = Label(self,text=chr(int("E19F", 16)), font=('Segoe MDL2 Assets', 20), style="Sidebar.TLabel")
+        # self.icone_like_on = Label(self, text=chr(int("E19E", 16)), font=('Segoe MDL2 Assets', 20), style="Sidebar.TLabel")
+        self.icone_rt_off = Label(Cadre1, text=chr(int("E1CA", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.icone_rt_on = Label(Cadre1, text=chr(int("E10E", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.icone_reply = Label(Cadre1, text=chr(int("E15F", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        # self.name = Label(self, text='Gabigabigoooo')
+        # self.screen_name = Label(self, text='@DUGNYCHON_DIVIN')
+
+        # GRID
+        image.grid(column=0, row=0, pady=30, rowspan=2, sticky='N')
+        self.name.grid(column=1, row=0, pady=15, sticky='N')
+        self.screen_name.grid(column=2, row=0, pady=0)
+        self.status.grid(column=1, row=1, columnspan=3, sticky='NE')
+        self.date.grid(column=3, row=2, pady=15, sticky='E')
+
+        self.icone_reply.grid(column=1, row=0, pady=2, padx=30, sticky="W")
+        # self.likes_count.grid(column=1, row=5, pady=2)
+
+
+        # self.fav_count.grid(column=2, row=5, pady=2)
+        self.icone_fav_off.grid(column=2, row=0, pady=2, padx=30)
+        # self.icone_fav_on.grid(column=2, row=5, pady=2)
+
+        # self.rt_count.grid(column=3, row=5, pady=2)
+        self.icone_rt_off.grid(column=3, row=0, pady=2, padx=30)
+
+        # self.icone_rt_on.grid(column=3, row=5, pady=2)
+
+
+        # Fonctions
+        # TODO récuperer tweet_id
+
+        def fav(event):
+            print('fav')
+            # twitter.create_favorite(id = tweet_id)
+            self.parent.parent.connec.fav(message)
+            self.icone_fav_on.grid(column=2, row=0, pady=2, padx=30)
+
+        def defav(event):
+            print('defav')
+            self.parent.parent.connec.defav(message)
+            self.icone_fav_on.grid_forget()
+
+        def rt_on(event):
+            print("retweet")
+            # twitter.retweet(id = tweet["id_str"])
+            self.parent.parent.connec.retweet(message)
+            self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
+
+        def rt_off(event):
+            print("annule retweet")
+            # annuler le retweet
+            self.parent.parent.connec.unretweet(message)
+            self.icone_rt_on.grid_forget()
+
+        def reply(event):
+            print("reply")
+            # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
+            self.icone_reply['state'] = "disabled"
+
+
+        #BINDING
+        self.icone_fav_off.bind("<Button-1>", fav)
+        self.icone_fav_on.bind("<Button-1>", defav)
+        self.icone_rt_on.bind("<Button-1>", rt_off)
+        self.icone_rt_off.bind("<Button-1>", rt_on)
+        # self.icone_like_off.bind("<Button-1>", like)
+        # self.icone_like_on.bind("<Button-1>", dislike)
+        self.icone_reply.bind("<Button-1>", reply)
+
 
 
 class ProfilePictureGUI(Frame):
@@ -292,7 +454,7 @@ class ProfilePictureGUI(Frame):
         logger.debug("Dossier cache : " + cache_dir)
 
         # On crée un string avec le lien absolu vers le fichier
-        self.save = cache_dir + "/" + save_relatif
+        self.save = save_relatif
         logger.debug("Fichier cache : " + self.save)
 
         # Si le fichier n'existe pas alors on le télécharge
@@ -407,7 +569,7 @@ class TimeLine(Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         logger.debug(self.scrollbar.get())
 
-
+'''
 # On commence le code ici
 if __name__ == "__main__":
     logger.info("Démarrage de TwISN")
@@ -442,3 +604,76 @@ if __name__ == "__main__":
     principal.quit()
     logger.info("Fermeture de TwISN")
     sys.exit()
+'''
+if __name__ == '__main__':
+    t = tk.Tk()
+    data = {'created_at': 'Sun Apr 16 20:05:02 +0000 2017', 'id': 853700783006773250, 'id_str': '853700783006773250',
+         'text': 'RT @Wale: I just met Lauryn Hill and hugged SZA in a 5 min span... Coachella is officially Disney land 😊',
+         'truncated': False, 'entities': {'hashtags': [], 'symbols': [], 'user_mentions': [
+            {'screen_name': 'Wale', 'name': 'Wale', 'id': 17929027, 'id_str': '17929027', 'indices': [3, 8]}],
+                                          'urls': []},
+         'source': '<a href="http://twitter.com/download/iphone" rel="nofollow">Twitter for iPhone</a>',
+         'in_reply_to_status_id': None, 'in_reply_to_status_id_str': None, 'in_reply_to_user_id': None,
+         'in_reply_to_user_id_str': None, 'in_reply_to_screen_name': None,
+         'user': {'id': 1380046638, 'id_str': '1380046638', 'name': 'pat', 'screen_name': 'shonenmami',
+                  'location': 'Cosa nostra', 'description': '*special snowflake *', 'url': 'https://t.co/IwQdYm1nV1',
+                  'entities': {'url': {'urls': [
+                      {'url': 'https://t.co/IwQdYm1nV1', 'expanded_url': 'https://youtu.be/Fof9lHaApXc',
+                       'display_url': 'youtu.be/Fof9lHaApXc', 'indices': [0, 23]}]}, 'description': {'urls': []}},
+                  'protected': False, 'followers_count': 983, 'friends_count': 342, 'listed_count': 40,
+                  'created_at': 'Thu Apr 25 18:06:31 +0000 2013', 'favourites_count': 1663, 'utc_offset': 7200,
+                  'time_zone': 'Paris', 'geo_enabled': True, 'verified': False, 'statuses_count': 91238, 'lang': 'fr',
+                  'contributors_enabled': False, 'is_translator': False, 'is_translation_enabled': False,
+                  'profile_background_color': 'C0DEED',
+                  'profile_background_image_url': 'http://pbs.twimg.com/profile_background_images/468122332091781120/UwUDLKHD.jpeg',
+                  'profile_background_image_url_https': 'https://pbs.twimg.com/profile_background_images/468122332091781120/UwUDLKHD.jpeg',
+                  'profile_background_tile': True,
+                  'profile_image_url': 'http://pbs.twimg.com/profile_images/852948354673905664/uJtKgIjB_normal.jpg',
+                  'profile_image_url_https': 'https://pbs.twimg.com/profile_images/852948354673905664/uJtKgIjB_normal.jpg',
+                  'profile_banner_url': 'https://pbs.twimg.com/profile_banners/1380046638/1492131018',
+                  'profile_link_color': '1B95E0', 'profile_sidebar_border_color': 'FFFFFF',
+                  'profile_sidebar_fill_color': 'DDEEF6', 'profile_text_color': '333333',
+                  'profile_use_background_image': True, 'has_extended_profile': True, 'default_profile': False,
+                  'default_profile_image': False, 'following': True, 'follow_request_sent': False,
+                  'notifications': False, 'translator_type': 'regular'}, 'geo': None, 'coordinates': None,
+         'place': None, 'contributors': None,
+         'retweeted_status': {'created_at': 'Sun Apr 16 06:53:17 +0000 2017', 'id': 853501532511158272,
+                              'id_str': '853501532511158272',
+                              'text': 'I just met Lauryn Hill and hugged SZA in a 5 min span... Coachella is officially Disney land 😊',
+                              'truncated': False,
+                              'entities': {'hashtags': [], 'symbols': [], 'user_mentions': [], 'urls': []},
+                              'source': '<a href="http://twitter.com/download/iphone" rel="nofollow">Twitter for iPhone</a>',
+                              'in_reply_to_status_id': None, 'in_reply_to_status_id_str': None,
+                              'in_reply_to_user_id': None, 'in_reply_to_user_id_str': None,
+                              'in_reply_to_screen_name': None,
+                              'user': {'id': 17929027, 'id_str': '17929027', 'name': 'Wale', 'screen_name': 'Wale',
+                                       'location': '', 'description': 'S H i N E', 'url': 'https://t.co/C9z5FuktdG',
+                                       'entities': {'url': {'urls': [{'url': 'https://t.co/C9z5FuktdG',
+                                                                      'expanded_url': 'https://atlanti.cr/preordershine',
+                                                                      'display_url': 'atlanti.cr/preordershine',
+                                                                      'indices': [0, 23]}]},
+                                                    'description': {'urls': []}}, 'protected': False,
+                                       'followers_count': 5371582, 'friends_count': 2439, 'listed_count': 12470,
+                                       'created_at': 'Sat Dec 06 21:15:10 +0000 2008', 'favourites_count': 1542,
+                                       'utc_offset': -18000, 'time_zone': 'Central Time (US & Canada)',
+                                       'geo_enabled': True, 'verified': True, 'statuses_count': 63687, 'lang': 'en',
+                                       'contributors_enabled': False, 'is_translator': False,
+                                       'is_translation_enabled': True, 'profile_background_color': '000000',
+                                       'profile_background_image_url': 'http://pbs.twimg.com/profile_background_images/378800000013969591/12be27ae8ce2ec071a2b6126c308ea5e.png',
+                                       'profile_background_image_url_https': 'https://pbs.twimg.com/profile_background_images/378800000013969591/12be27ae8ce2ec071a2b6126c308ea5e.png',
+                                       'profile_background_tile': False,
+                                       'profile_image_url': 'http://pbs.twimg.com/profile_images/843521441211604993/QuyIRC7f_normal.jpg',
+                                       'profile_image_url_https': 'https://pbs.twimg.com/profile_images/843521441211604993/QuyIRC7f_normal.jpg',
+                                       'profile_link_color': '1B95E0', 'profile_sidebar_border_color': 'FFFFFF',
+                                       'profile_sidebar_fill_color': 'FFFFFF', 'profile_text_color': '000000',
+                                       'profile_use_background_image': False, 'has_extended_profile': False,
+                                       'default_profile': False, 'default_profile_image': False, 'following': False,
+                                       'follow_request_sent': False, 'notifications': False, 'translator_type': 'none'},
+                              'geo': None, 'coordinates': None, 'place': None, 'contributors': None,
+                              'is_quote_status': False, 'retweet_count': 2596, 'favorite_count': 7487,
+                              'favorited': False, 'retweeted': False, 'lang': 'en'}, 'is_quote_status': False,
+         'retweet_count': 2596, 'favorite_count': 0, 'favorited': False, 'retweeted': False, 'lang': 'en'}
+    tweet = Tweet(data)
+    tweeti = TweetGUI(t, tweet)
+    tweeti.pack()
+    t.mainloop()
