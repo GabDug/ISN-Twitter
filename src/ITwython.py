@@ -12,7 +12,7 @@ logger = logger_conf.Log.logger
 # Modèles
 class User:
     def __init__(self, data, *args, **kwargs):
-        logger.debug(str(data))
+        # logger.debug(str(data))
         # self.id = id
         # self.screen_name = screen_name
         self.id = data["id_str"]

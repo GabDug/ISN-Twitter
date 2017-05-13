@@ -48,6 +48,8 @@ class FenetreConnexion(tk.Toplevel):
         message_info_1 = Label(cadre,
                                text="Vous devez vous connecter sur twitter.com dans la page qui vient de s'ouvrir. ")
         message_info_2 = Label(cadre, text="Vous obtiendrez ainsi un code à usage unique pour vous connecter à TwISN.")
+        message_info_3 = Label(cadre, text="Cliquez ici pour réouvrir la page.")
+
         frame_code = Frame(cadre)
         codelabel = Label(frame_code, text="Code de connexion")
         codeentry = Entry(frame_code, textvariable=self.pin_variable)
@@ -57,12 +59,16 @@ class FenetreConnexion(tk.Toplevel):
         # logo.grid(row=1, column=0, columnspan=2)
         message_info_1.grid(row=1, column=0, columnspan=2, sticky="w")
         message_info_2.grid(row=2, column=0, columnspan=2, sticky="w")
-        frame_code.grid(row=3, column=0, columnspan=2, sticky="w", pady=20)
+        message_info_3.grid(row=3, column=0, columnspan=2, sticky="w")
+        frame_code.grid(row=4, column=0, columnspan=2, sticky="w", pady=20)
         codelabel.grid(row=0, column=0, sticky="w")
         codeentry.grid(row=1, column=0, sticky="w")
-        bouton.grid(row=5, column=0, sticky="e", columnspan=2)
+        bouton.grid(row=6, column=0, sticky="e", columnspan=2)
+
+        message_info_3.bind("<Button-1>", lambda __: self.ouverture_lien())
 
         codeentry.focus()
+
         self.ouverture_lien()
 
     def ouverture_lien(self):
