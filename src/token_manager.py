@@ -124,7 +124,6 @@ def _decoder_liste(liste: list) -> list:
         resultat.append(_decoder_string(element))
     return resultat
 
-
 def _set_app_tokens(token1: str, token2: str) -> bool:
     """Permet de changer les tokens app qui sont stockés dans un fichier. Utilisée uniquement pour la maintenance."""
     try:
@@ -148,3 +147,4 @@ if __name__ == "__main__":
     set_tokens(a, b)
     # set_tokens(a,b)
     logger.info(get_all_tokens())
+
