@@ -1,5 +1,7 @@
 import os
 import sys
+# noinspection PyUnresolvedReferences
+from multiprocessing import Queue
 
 from cx_Freeze import setup, Executable
 
@@ -14,12 +16,16 @@ interpreter_path = os.path.dirname(sys.executable)
 # Ajoute les fichiers
 include_files = [r"{0}\DLLs\tcl86t.dll".format(interpreter_path),
                  r"{0}\DLLs\tk86t.dll".format(interpreter_path),
-                 "mttkinter.py",
-                 "ITwython.py",
+                 "lib/mttkinter.py",
                  "auth_gui.py",
+                 "user_gui.py",
+                 "options_gui.py",
                  "token_manager.py",
+                 "path_finder.py",
+                 "ITwython.py",
+                 "logger_conf.py",
                  "../dev_assets/list_tweets.py",
-                 "../data/secrets",
+                 "../assets/app_tokens",
                  "../assets/twisn.png"]
 
 # Ajoute les variables d'environnement nécessaires

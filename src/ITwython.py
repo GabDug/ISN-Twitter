@@ -1,6 +1,7 @@
 import datetime
 
 from twython import *
+from multiprocessing import Queue
 
 import logger_conf
 

@@ -17,7 +17,11 @@ import path_finder
 import token_manager
 import user_gui
 from ITwython import Tweet
-from lib import mttkinter as tk
+
+try:
+    from lib import mttkinter as tk
+except:
+    import mttkinter as tk
 
 logger = logger_conf.Log.logger
 

@@ -5,7 +5,7 @@ import urllib
 from tkinter.ttk import *
 
 from PIL import Image, ImageTk
-from dev_assets import user_example
+
 
 import logger_conf
 import path_finder
@@ -162,6 +162,7 @@ class FenetreUtilisateur(tk.Toplevel):
 # Permet d'éxécuter le code uniquement si lancé
 # Pour tester
 if __name__ == "__main__":
+    from dev_assets import user_example
     root = tk.Tk()
     r = FenetreUtilisateur(root, User(user_example.c), test=True)
     r.grab_set()
