@@ -130,6 +130,25 @@ class Connec(Twython):
         else:
             return True, "Fake tweet envoyé !"
 
+    #NEW
+    def fav(event):
+        Twython.create_favorite(id = tweet["id_str"])
+
+    def defav(event):
+        pass
+
+    def retweet(event):
+        Twython.retweet(id = tweet["id_str"])
+
+    def unretweet(event):
+        pass
+        # annuler le retweet
+
+    def reply(event):
+        # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
+        pass
+    #NEW
+
     # Underscore au début du nom -> convention pour fonction interne
     def _debugrate(self):
         """Affiche les infos sur les limites d'utilisation dans la console"""

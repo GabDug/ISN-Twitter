@@ -242,6 +242,7 @@ class Sidebar(Frame):
         principal.wait_window(fenetre_utilisateur)
 
 
+'''
 class TweetGUI(Frame):
     """Cadre pour afficher un tweet unique."""
 
@@ -292,6 +293,168 @@ class TweetGUI(Frame):
         self.date.pack()
         # self.fav_count.pack()
         # self.rt_count.pack()
+'''
+
+class TweetGUI(Frame):
+    """Cadre pour afficher un tweet unique."""
+
+    def __init__(self, parent, tweet: Tweet):
+        logger.debug("Initialisation cadre : tweet")
+        Frame.__init__(self, parent)
+
+        style = Style()
+        style.configure("Test.TFrame", foreground="white", background="blue", font=('Segoe UI', 10))
+        style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
+        style.configure("TButton", font=('Segoe UI', 10))
+
+        style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
+        style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
+
+        self.parent = parent
+        # self.connec = parent.connec
+        self.tweet = tweet
+        # On met en place le cadre du tweet
+
+        screen_name = self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
+        name = self.tweet.user.name.encode("utf-8").decode('utf-8')
+        #TODO mettre une limite de caractere ? (pour ne pas avoir de probleme avec laffichage
+        status = self.tweet.text.encode("utf-8").decode('utf-8')
+        date = self.tweet.created_at.encode("utf-8").decode('utf-8')
+
+        # self.profile_image = Label(self, image=None)
+        try:
+            self.status = tk.Message(self, text=status, width=320, foreground="white", background="#343232",
+                                     font=('Segoe UI', 10))
+        except tk.TclError as e:
+            self.status = tk.Message(self, text=status.encode("utf-8"), width=380, foreground="white",
+                                     background="#343232", font=('Segoe UI', 10))
+
+        try:
+            self.name = Label(self, text=name)
+        except tk.TclError as e:
+            self.name = Label(self, text=name.encode("utf-8"))
+
+        try:
+            self.screen_name = Label(self, text="@" + screen_name)
+        except tk.TclError as e:
+            pass
+
+        self.date = Label(self, text=date)
+
+        self.lien = "https://pbs.twimg.com/profile_images/817042499134980096/LTpqSDMM_bigger.jpg"
+        save_relatif = self.lien.replace(":", "").replace("/", "")
+        cache_dir = ""
+        # On crée un string avec le lien absolu vers le fichier
+        self.save = save_relatif
+
+        if os.path.isfile(self.save):
+            print("File already exists ! ")
+        # Sinon on le télécharge
+        else:
+
+            try:
+                testfile = urllib.request.URLopener()
+                testfile.retrieve(self.lien, self.save)
+                # aa = "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"
+                # internal data file
+                # data_stream = io.BytesIO(aa)
+                # open as a PIL image object
+
+            except urllib.error.HTTPError as e:
+                print("HTTP ERROR PROFILE PICTURE !" + str(e))
+                return
+
+        Cadre1 = Frame(self, cursor='dot', width=500, height=50, style="TLabel")
+        Cadre1.grid(column=0, row=5, columnspan=5, padx=0, pady=0, sticky='')
+
+        cadre2 = Frame(self, cursor='arrow', width=100, height=100, style="Test.TFrame")
+        cadre2.grid(column=0, row=0, rowspan=2, padx=20, pady=20, sticky='N')
+
+        separateur = Frame(self, width=500, height=8)
+        separateur.grid(column=0, row=6, columnspan=5)
+
+        # self.profile_picture = ProfilePictureGUI(self)
+        self.image = Image.open(self.save)
+        self.profile_picture = ImageTk.PhotoImage(self.image)
+        image = Label(self, image=self.profile_picture)
+
+        self.likes_count = Label(self, text="                 ")
+        self.fav_count = Label(self, text="              : 1")
+        self.icone_fav_off = Label(Cadre1, text=chr(int("E1CE", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.icone_fav_on = Label(Cadre1, text=chr(int("E1CF", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.rt_count = Label(self, text="            : 1")
+        # self.icone_like_off = Label(self,text=chr(int("E19F", 16)), font=('Segoe MDL2 Assets', 20), style="Sidebar.TLabel")
+        # self.icone_like_on = Label(self, text=chr(int("E19E", 16)), font=('Segoe MDL2 Assets', 20), style="Sidebar.TLabel")
+        self.icone_rt_off = Label(Cadre1, text=chr(int("E1CA", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.icone_rt_on = Label(Cadre1, text=chr(int("E10E", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        self.icone_reply = Label(Cadre1, text=chr(int("E15F", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+        # self.name = Label(self, text='Gabigabigoooo')
+        # self.screen_name = Label(self, text='@DUGNYCHON_DIVIN')
+
+        # GRID
+        image.grid(column=0, row=0, pady=30, rowspan=2, sticky='N')
+        self.name.grid(column=1, row=0, pady=15, sticky='N')
+        self.screen_name.grid(column=2, row=0, pady=0)
+        self.status.grid(column=1, row=1, columnspan=3, sticky='NE')
+        self.date.grid(column=3, row=2, pady=15, sticky='E')
+
+        self.icone_reply.grid(column=1, row=0, pady=2, padx=30, sticky="W")
+        # self.likes_count.grid(column=1, row=5, pady=2)
+
+
+        # self.fav_count.grid(column=2, row=5, pady=2)
+        self.icone_fav_off.grid(column=2, row=0, pady=2, padx=30)
+        # self.icone_fav_on.grid(column=2, row=5, pady=2)
+
+        # self.rt_count.grid(column=3, row=5, pady=2)
+        self.icone_rt_off.grid(column=3, row=0, pady=2, padx=30)
+
+        # self.icone_rt_on.grid(column=3, row=5, pady=2)
+
+
+        # Fonctions
+        # TODO récuperer tweet_id
+
+        def fav(event):
+            print('fav')
+            # twitter.create_favorite(id = tweet_id)
+            self.parent.parent.connec.fav(message)
+            self.icone_fav_on.grid(column=2, row=0, pady=2, padx=30)
+
+        def defav(event):
+            print('defav')
+            self.parent.parent.connec.defav(message)
+            self.icone_fav_on.grid_forget()
+
+        def rt_on(event):
+            print("retweet")
+            # twitter.retweet(id = tweet["id_str"])
+            self.parent.parent.connec.retweet(message)
+            self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
+
+        def rt_off(event):
+            print("annule retweet")
+            # annuler le retweet
+            self.parent.parent.connec.unretweet(message)
+            self.icone_rt_on.grid_forget()
+
+        def reply(event):
+            print("reply")
+            # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
+            self.icone_reply['state'] = "disabled"
+
+
+        #BINDING
+        self.icone_fav_off.bind("<Button-1>", fav)
+        self.icone_fav_on.bind("<Button-1>", defav)
+        self.icone_rt_on.bind("<Button-1>", rt_off)
+        self.icone_rt_off.bind("<Button-1>", rt_on)
+        # self.icone_like_off.bind("<Button-1>", like)
+        # self.icone_like_on.bind("<Button-1>", dislike)
+        self.icone_reply.bind("<Button-1>", reply)
+
 
 
 class ProfilePictureGUI(Frame):
