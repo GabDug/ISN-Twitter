@@ -367,7 +367,7 @@ class TweetGUI(Frame):
         separateur = Frame(self, width=500, height=8)
         separateur.grid(column=0, row=6, columnspan=5)
 
-        self.profile_picture = ProfilePictureGUI(self, self.tweet)
+        self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir)
 
         cadre_actions = Frame(self, cursor='dot', width=500, height=50, style="TLabel")
         # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
@@ -407,7 +407,6 @@ class TweetGUI(Frame):
         # self.rt_count.grid(column=3, row=5, pady=2)
         self.icone_rt.grid(column=2, row=0, pady=2, padx=00, sticky="E")
 
-
         def clic_fav(event):
             logger.debug('Clic fav : ' + self.id)
             self.timeline.parent.connec.fav(self.id)
@@ -437,7 +436,7 @@ class TweetGUI(Frame):
 
 
 class ProfilePictureGUI(Frame):
-    def __init__(self, parent, tweet: Tweet):
+    def __init__(self, parent, tweet: Tweet, cache_dir=path_finder.PathFinder.get_cache_directory()):
         logger.debug("Initialisation cadre : photo de profil")
         Frame.__init__(self, parent)
 
@@ -446,8 +445,7 @@ class ProfilePictureGUI(Frame):
         # TODO Fixer le lien si l'app est frozen
         # On supprime les : et / de l'url pour en faire un nom de fichier
         save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
-        # On obtient le répertoire de sauvegarde des photos
-        cache_dir = path_finder.PathFinder.get_cache_directory()
+
         # logger.debug("Dossier cache : " + cache_dir)
 
         # On crée un string avec le lien absolu vers le fichier
@@ -484,6 +482,9 @@ class TimeLine(Frame):
         style.configure("Test.TFrame", foreground="white", background="purple", font=('Segoe UI', 10))
         Frame.__init__(self, parent, style="Test.TFrame")
         self.parent = parent
+
+        # On récupère le dossier de cache pour les photos
+        self.cache_dir = path_finder.PathFinder.get_cache_directory()
 
         self.online = stream_connection
 
@@ -576,7 +577,7 @@ if __name__ == "__main__":
     # Principal est la racine de l'app
     principal = tk.Tk()
     principal.title("TwISN")
-    principal.config(bg='pink') # TODO remove debug
+    principal.config(bg='pink')  # TODO remove debug
     principal.minsize(width=850, height=300)
 
     principal.columnconfigure(0, weight=1)

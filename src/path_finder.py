@@ -16,7 +16,10 @@ class PathFinder:
             datadir = os.path.dirname(sys.executable)  # Répertoire de l'exécutable
             # logger.info(datadir)
 
+
             chemin_absolu = datadir + "/data/cache"
+            if not os.path.exists(chemin_absolu):
+                os.makedirs(chemin_absolu)
             # logger.info(chemin_absolu)
             # logger.info(os.path.abspath(chemin_absolu))
             return chemin_absolu
@@ -25,6 +28,8 @@ class PathFinder:
         else:
             chemin_relatif = "/../data/cache"
             chemin_absolu = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + chemin_relatif)
+            if not os.path.exists(chemin_absolu):
+                os.makedirs(chemin_absolu)
             print(chemin_absolu)
             return chemin_absolu
             # logger.info("Twysn isn't frozen, secret file : " + chemin_app_tokens)
