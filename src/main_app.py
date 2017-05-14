@@ -91,18 +91,34 @@ class App(Frame):
         self.app_key, self.app_secret, self.user_key, self.user_secret = token_manager.get_all_tokens()
         # Une fois qu'on a les tokens, créer la connexion
 
-        self.connec = ITwython.Connec(self.app_key, self.app_secret, self.user_key, self.user_secret)
+        if token_manager.app_token_exist():
+            self.connec = ITwython.Connec(self.app_key, self.app_secret, self.user_key, self.user_secret)
+            erreur = self.connec.erreur
+        else:
+            erreur = "no_app_tokens"
+            self.connec = None
 
-        if self.connec.exist:
+        if not (self.connec is None) and self.connec.exist:
             self.ajout_widget()
         else:
-            if self.connec.erreur == "token_invalid":
+            if erreur == "token_invalid":
                 messagebox.showwarning(
                     "Impossible de se connecter à Twitter !",
                     "Les identifiants de connexion sont invalides ou expirés, "
                     "merci de réessayer."
                 )
                 token_manager.delete_tokens()
+            elif erreur == "app_token_invalid":
+                messagebox.showerror(
+                    "Impossible de se connecter à Twitter !",
+                    "Les jetons de l'application sont invalides ou expirés, "
+                    "merci de mettre l'application à jour."
+                )
+            elif erreur == "no_app_tokens":
+                messagebox.showerror(
+                    "Impossible de se connecter à Twitter !",
+                    "Vérifiez la présence du fichier data/app_tokens !"
+                )
             else:
                 messagebox.showerror(
                     "Impossible de se connecter à Twitter !",

@@ -105,6 +105,9 @@ class Connec(Twython):
                 if str(e) == "Twitter API returned a 401 (Unauthorized), Invalid or expired token.":
                     logger.error("Token invalide ou expiré ! Erreur : " + str(e))
                     self.erreur = "token_invalid"
+                elif str(e) == "Twitter API returned a 400 (Bad Request), Bad Authentication data.":
+                    logger.error("Jetons incorrects ! Erreur : " + str(e))
+                    self.erreur = "app_token_invalid"
                 else:
                     logger.error("Impossible de créer la connection Twython ! Erreur : " + str(e))
                     self.erreur = True
