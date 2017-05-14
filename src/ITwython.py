@@ -28,9 +28,12 @@ class User:
         self.followers_count = data["followers_count"]
         self.friends_count = data["friends_count"]
         self.statuses_count = data["statuses_count"]
-
-        self.profile_banner_url = data["profile_banner_url"]
-        # TODO Ajouter tous les cas possibles et pas crasher si un élément pas présent
+        try:
+            self.profile_banner_url = data["profile_banner_url"]
+        except KeyError as e:
+            self.profile_image_url = None
+            logger.error("Profile_banner_url : " + str(e))
+            # TODO Ajouter tous les cas possibles et pas crasher si un élément pas présent
 
 
 class Tweet:
@@ -38,10 +41,15 @@ class Tweet:
         self.data = data
         self.created_at = data["created_at"]
         # TODO self.date = self.created_at mais en objet date
-        self.id = data["id"]
-        self.id_str = data["id_str"]
+        self.id = data["id_str"]
         self.text = data["text"]
         self.user = User(data["user"])
+
+        self.favorited = data["favorited"]
+        self.retweeted = data["retweeted"]
+
+        self.retweet_count = data["retweet_count"]
+        self.favorite_count = data["favorite_count"]
 
 
 # Connections
@@ -130,24 +138,24 @@ class Connec(Twython):
         else:
             return True, "Fake tweet envoyé !"
 
-    #NEW
-    def fav(event):
-        Twython.create_favorite(id = tweet["id_str"])
+    def fav(self, id: str):
+        self.create_favorite(id=id)
 
-    def defav(event):
+    def defav(self, id: str):
         pass
 
-    def retweet(event):
-        Twython.retweet(id = tweet["id_str"])
+    # on ne peux pas appeler la fonction retweet car une fonction de Twython existe déjà
+    def retweeter(self, id: str):
+        self.retweet(id=id)
 
-    def unretweet(event):
+    def unretweeter(self, id: str):
+        # Je crois qu'il faut supprimer un tweet pour unretweet
         pass
         # annuler le retweet
 
-    def reply(event):
-        # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
+    def reply(self, id: str):
+        # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur (On va réutiliser tweeter et pas faire reply)
         pass
-    #NEW
 
     # Underscore au début du nom -> convention pour fonction interne
     def _debugrate(self):

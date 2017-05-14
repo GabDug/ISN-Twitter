@@ -58,6 +58,7 @@ class App(Frame):
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="black", background="#343232", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="black", background="green", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
 
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
@@ -114,16 +115,18 @@ class App(Frame):
     def ajout_widget(self):
         self.sidebar = Sidebar(self)
         self.sidebar.grid(column=0, row=0, sticky="nse")
-        # self.sidebar.grid_propagate(0)
+        self.sidebar.grid_propagate(0)
+        self.sidebar.rowconfigure(0, weight=1)
 
         self.cadre_tweet = EnvoiTweet(self)
         self.cadre_tweet.grid(column=1, row=0)
 
         self.tl = TimeLine(self, stream_connection=self.stream_connection, static_connection=self.static_connection)
         self.tl.grid(column=2, row=0)
-
-        self.sidebar.grid_propagate(0)
-        self.sidebar.rowconfigure(0, weight=1)
+        self.tl.columnconfigure(2, weight=1)
+        self.tl.rowconfigure(0, weight=1)
+        self.columnconfigure(2, weight=1)
+        self.rowconfigure(0, weight=1)
 
 
 class EnvoiTweet(Frame):
@@ -295,15 +298,19 @@ class TweetGUI(Frame):
         # self.rt_count.pack()
 '''
 
+
 class TweetGUI(Frame):
     """Cadre pour afficher un tweet unique."""
 
-    def __init__(self, parent, tweet: Tweet):
-        logger.debug("Initialisation cadre : tweet")
+    def __init__(self, parent, tweet: Tweet, timeline):
+        logger.debug("Initialisation cadre : TweetGUI")
         Frame.__init__(self, parent)
+        self.parent = parent
+        self.timeline = timeline
+        self.tweet = tweet
 
         style = Style()
-        style.configure("Test.TFrame", foreground="white", background="blue", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="white", background="red", font=('Segoe UI', 10))
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
@@ -312,23 +319,18 @@ class TweetGUI(Frame):
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
         style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
 
-        self.parent = parent
-        # self.connec = parent.connec
-        self.tweet = tweet
-        # On met en place le cadre du tweet
-
+        self.id = tweet.id
         screen_name = self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
         name = self.tweet.user.name.encode("utf-8").decode('utf-8')
-        #TODO mettre une limite de caractere ? (pour ne pas avoir de probleme avec laffichage
+        # TODO mettre une limite de caractere ? (pour ne pas avoir de probleme avec l'affichage)
         status = self.tweet.text.encode("utf-8").decode('utf-8')
         date = self.tweet.created_at.encode("utf-8").decode('utf-8')
 
-        # self.profile_image = Label(self, image=None)
         try:
-            self.status = tk.Message(self, text=status, width=320, foreground="white", background="#343232",
+            self.status = tk.Message(self, text=status, width=480, foreground="white", background="#343232",
                                      font=('Segoe UI', 10))
         except tk.TclError as e:
-            self.status = tk.Message(self, text=status.encode("utf-8"), width=380, foreground="white",
+            self.status = tk.Message(self, text=status.encode("utf-8"), width=480, foreground="white",
                                      background="#343232", font=('Segoe UI', 10))
 
         try:
@@ -343,118 +345,79 @@ class TweetGUI(Frame):
 
         self.date = Label(self, text=date)
 
-        self.lien = "https://pbs.twimg.com/profile_images/817042499134980096/LTpqSDMM_bigger.jpg"
-        save_relatif = self.lien.replace(":", "").replace("/", "")
-        cache_dir = ""
-        # On crée un string avec le lien absolu vers le fichier
-        self.save = save_relatif
-
-        if os.path.isfile(self.save):
-            print("File already exists ! ")
-        # Sinon on le télécharge
-        else:
-
-            try:
-                testfile = urllib.request.URLopener()
-                testfile.retrieve(self.lien, self.save)
-                # aa = "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"
-                # internal data file
-                # data_stream = io.BytesIO(aa)
-                # open as a PIL image object
-
-            except urllib.error.HTTPError as e:
-                print("HTTP ERROR PROFILE PICTURE !" + str(e))
-                return
-
-        Cadre1 = Frame(self, cursor='dot', width=500, height=50, style="TLabel")
-        Cadre1.grid(column=0, row=5, columnspan=5, padx=0, pady=0, sticky='')
-
-        cadre2 = Frame(self, cursor='arrow', width=100, height=100, style="Test.TFrame")
-        cadre2.grid(column=0, row=0, rowspan=2, padx=20, pady=20, sticky='N')
+        # cadre2 = Frame(self, cursor='arrow', width=100, height=100, style="Test.TFrame")
+        # cadre2.grid(column=0, row=0, rowspan=2, padx=20, pady=20, sticky='N')
 
         separateur = Frame(self, width=500, height=8)
         separateur.grid(column=0, row=6, columnspan=5)
 
-        # self.profile_picture = ProfilePictureGUI(self)
-        self.image = Image.open(self.save)
-        self.profile_picture = ImageTk.PhotoImage(self.image)
-        image = Label(self, image=self.profile_picture)
+        self.profile_picture = ProfilePictureGUI(self, self.tweet)
 
-        self.likes_count = Label(self, text="                 ")
+        cadre_actions = Frame(self, cursor='dot', width=500, height=50, style="TLabel")
+        # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
         self.fav_count = Label(self, text="              : 1")
-        self.icone_fav_off = Label(Cadre1, text=chr(int("E1CE", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
-        self.icone_fav_on = Label(Cadre1, text=chr(int("E1CF", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
+
+        self.fav_variable = tk.StringVar()
+        if not tweet.favorited:
+            self.fav_variable.set(chr(int("E1CE", 16)))
+        else:
+            self.fav_variable.set(chr(int("E1CF", 16)))
+        self.icone_fav = Label(cadre_actions, textvariable=self.fav_variable, font=('Segoe MDL2 Assets', 14),
+                               style="TLabel")
+
         self.rt_count = Label(self, text="            : 1")
-        # self.icone_like_off = Label(self,text=chr(int("E19F", 16)), font=('Segoe MDL2 Assets', 20), style="Sidebar.TLabel")
-        # self.icone_like_on = Label(self, text=chr(int("E19E", 16)), font=('Segoe MDL2 Assets', 20), style="Sidebar.TLabel")
-        self.icone_rt_off = Label(Cadre1, text=chr(int("E1CA", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
-        self.icone_rt_on = Label(Cadre1, text=chr(int("E10E", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
-        self.icone_reply = Label(Cadre1, text=chr(int("E15F", 16)), font=('Segoe MDL2 Assets', 20), style="TLabel")
-        # self.name = Label(self, text='Gabigabigoooo')
-        # self.screen_name = Label(self, text='@DUGNYCHON_DIVIN')
+        self.icone_rt = Label(cadre_actions, text=chr(int("E1CA", 16)), font=('Segoe MDL2 Assets', 14),
+                              style="TLabel")
+        # chr(int("E10E", 16))
 
-        # GRID
-        image.grid(column=0, row=0, pady=30, rowspan=2, sticky='N')
-        self.name.grid(column=1, row=0, pady=15, sticky='N')
-        self.screen_name.grid(column=2, row=0, pady=0)
-        self.status.grid(column=1, row=1, columnspan=3, sticky='NE')
-        self.date.grid(column=3, row=2, pady=15, sticky='E')
+        self.icone_reply = Label(cadre_actions, text=chr(int("E15F", 16)), font=('Segoe MDL2 Assets', 14),
+                                 style="TLabel")
 
-        self.icone_reply.grid(column=1, row=0, pady=2, padx=30, sticky="W")
+        self.profile_picture.grid(column=0, row=0, pady=0, rowspan=1, sticky='NW')
+        self.name.grid(column=1, row=0, pady=0, sticky='S')
+        self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
+        self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
+        self.date.grid(column=1, columnspan=2, row=2, pady=0, sticky='E')
+
+        cadre_actions.grid(column=0, row=3, columnspan=3, padx=0, pady=0, sticky='E')
+
+        self.icone_reply.grid(column=0, row=0, pady=2, padx=00, sticky="")
         # self.likes_count.grid(column=1, row=5, pady=2)
 
-
         # self.fav_count.grid(column=2, row=5, pady=2)
-        self.icone_fav_off.grid(column=2, row=0, pady=2, padx=30)
+        self.icone_fav.grid(column=1, row=0, pady=2, padx=00, sticky="E")
         # self.icone_fav_on.grid(column=2, row=5, pady=2)
 
         # self.rt_count.grid(column=3, row=5, pady=2)
-        self.icone_rt_off.grid(column=3, row=0, pady=2, padx=30)
-
-        # self.icone_rt_on.grid(column=3, row=5, pady=2)
+        self.icone_rt.grid(column=2, row=0, pady=2, padx=00, sticky="E")
 
 
-        # Fonctions
-        # TODO récuperer tweet_id
+        def clic_fav(event):
+            logger.debug('Clic fav : ' + self.id)
+            self.timeline.parent.connec.fav(self.id)
+            self.fav_variable.set(chr(int("E1CF", 16)))
+            # On ne change pas de Label, on change juste le texte
 
-        def fav(event):
-            print('fav')
-            # twitter.create_favorite(id = tweet_id)
-            self.parent.parent.connec.fav(message)
-            self.icone_fav_on.grid(column=2, row=0, pady=2, padx=30)
+        def clic_rt(event):
+            logger.debug('Clic RT : ' + self.id)
+            self.timeline.parent.connec.retweet(self.id)
+            # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
 
-        def defav(event):
-            print('defav')
-            self.parent.parent.connec.defav(message)
-            self.icone_fav_on.grid_forget()
+        # def rt_off(event):
+        #     print("annule retweet")
+        #     # annuler le retweet
+        #     self.timeline.parent.connec.unretweet(self.id)
+        #     self.icone_rt_on.grid_forget()
 
-        def rt_on(event):
-            print("retweet")
-            # twitter.retweet(id = tweet["id_str"])
-            self.parent.parent.connec.retweet(message)
-            self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
-
-        def rt_off(event):
-            print("annule retweet")
-            # annuler le retweet
-            self.parent.parent.connec.unretweet(message)
-            self.icone_rt_on.grid_forget()
-
-        def reply(event):
-            print("reply")
+        def clic_reply(event):
+            logger.debug('Clic reply : ' + self.id)
             # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
             self.icone_reply['state'] = "disabled"
 
-
-        #BINDING
-        self.icone_fav_off.bind("<Button-1>", fav)
-        self.icone_fav_on.bind("<Button-1>", defav)
-        self.icone_rt_on.bind("<Button-1>", rt_off)
-        self.icone_rt_off.bind("<Button-1>", rt_on)
-        # self.icone_like_off.bind("<Button-1>", like)
-        # self.icone_like_on.bind("<Button-1>", dislike)
-        self.icone_reply.bind("<Button-1>", reply)
-
+        # BINDING
+        self.icone_fav.bind("<Button-1>", clic_fav)
+        self.icone_rt.bind("<Button-1>", clic_rt)
+        self.icone_reply.bind("<Button-1>", clic_reply)
 
 
 class ProfilePictureGUI(Frame):
@@ -501,14 +464,16 @@ class ProfilePictureGUI(Frame):
 class TimeLine(Frame):
     def __init__(self, parent, stream_connection=True, static_connection=True):
         logger.debug("Initialisation cadre : timeline")
-        Frame.__init__(self, parent)
+        style = Style()
+        style.configure("Test.TFrame", foreground="white", background="purple", font=('Segoe UI', 10))
+        Frame.__init__(self, parent, style="Test.TFrame")
         self.parent = parent
 
         self.online = stream_connection
 
         # J'ai mis le canvas en bleu pour bien voir là où il est : on est pas censé le voir mais juste le frame
         # On utilise un frame dans un canvas car pas de scrollbar sur le frame => scrollbar sur canvas
-        self.canvas = tk.Canvas(self, borderwidth=0, width=400, background="blue")
+        self.canvas = tk.Canvas(self, borderwidth=0, width=580, background="blue")
         self.frame = Frame(self.canvas)
         self.scrollbar = Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
@@ -526,7 +491,7 @@ class TimeLine(Frame):
             tweets_data = self.parent.connec.get_home_timeline(count=50)
             # Example de réponse dans dev_assets/list_tweets
 
-            # logger.debug(str(tweets_data).encode("utf-8"))
+            print(tweets_data)
             for tweet in tweets_data:
                 self.add_data(tweet)
 
@@ -569,7 +534,7 @@ class TimeLine(Frame):
     def add_data(self, data):
         """Ajoute un objet TweetGUI à la TimeLine à partir de données brutes."""
         if 'text' in data:
-            tweet = TweetGUI(self.frame, Tweet(data))
+            tweet = TweetGUI(self.frame, Tweet(data), self)
             tweet.grid(row=self.ligne, column=0)
             logger.debug(self.ligne)
             self.ligne = self.ligne + 1
@@ -595,8 +560,11 @@ if __name__ == "__main__":
     # Principal est la racine de l'app
     principal = tk.Tk()
     principal.title("TwISN")
-    principal.config(bg='white')
+    principal.config(bg='pink') # TODO remove debug
+    principal.minsize(width=850, height=300)
 
+    principal.columnconfigure(0, weight=1)
+    principal.rowconfigure(0, weight=1)
     # Récupération du chemin de l'icone et de l'état de l'applciation:
     frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()
 
@@ -609,7 +577,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, stream_connection=False, static_connection=True, frozen=frozen)
+    app = App(principal, stream_connection=True, static_connection=True, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.exist:
