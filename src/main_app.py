@@ -27,8 +27,8 @@ logger = logger_conf.Log.logger
 
 
 # TODO déplacer final dans App en staticmethod
-def final(fenetre, connectemporaire, oauth_verifier):
-    succes, login_credentials = connectemporaire.final(oauth_verifier)
+def final(fenetre, co_temporaire, oauth_verifier):
+    succes, login_credentials = co_temporaire.final(oauth_verifier)
     if succes:
         user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
         logger.debug("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
@@ -44,19 +44,20 @@ def final(fenetre, connectemporaire, oauth_verifier):
 # https://stackoverflow.com/questions/17466561/best-way-to-structure-a-tkinter-application
 # Classe qui hérite de Frame
 class App(Frame):
-    def __init__(self, parent, stream_connection=True, static_connection=True, frozen=False):
-        """stream_connection et static_connection permettent d'activer ou de désactiver les deux types de connection
+    def __init__(self, parent, connexion_stream=True, connexion_statique=True, frozen=False):
+        """connexion_stream et connexion_statique permettent d'activer ou de désactiver les deux types de connection
          pour travailler ur la mise en page sans se faire bloquer par les limitations."""
         # On définit le cadre dans l'objet App (inutile car pas kwargs**...)
         Frame.__init__(self, parent)
         self.parent = parent
         self.parent.lift()
 
-        self.exist = True
+        # Attribut utilisé pour montrer que tout va bien, False si doit ou va être détruit
+        self.existe = True
 
         self.frozen = frozen
-        self.stream_connection = stream_connection
-        self.static_connection = static_connection
+        self.stream_connection = connexion_stream
+        self.static_connection = connexion_statique
 
         style = Style()
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
@@ -68,24 +69,27 @@ class App(Frame):
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
         style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
 
-        # Tant que les tokens n'existent pas alors ouvrir fenêtre de connexion
+        # Si les tokens n'existent pas alors ouvrir fenêtre de connexion
         if not token_manager.user_token_exist():
-            logger.warning("User token does not exist !")
+            logger.warning("Les tokens utilisateurs n'existent pas !")
+            # On vérifie l'existence des tokens de l'application
             try:
                 app_key, app_secret = token_manager.get_app_tokens()
+
+            # S'ils nexistent pas on ferme App
             except TypeError as e:
                 logger.error("Impossible de trouver les tokens de l'application ! " + str(e))
                 messagebox.showerror(
                     "Erreur",
                     "Impossible de trouver les tokens de l'application !"
                 )
-                self.exist = False
+                self.existe = False
                 self.parent.destroy()
                 return
-            connectemp = ITwython.ConnecTemporaire(app_key, app_secret)
-            auth_url = connectemp.auth_url
+            co_temporaire = ITwython.ConnexionTemporaire(app_key, app_secret)
+            auth_url = co_temporaire.auth_url
 
-            auth_window = auth_gui.FenetreConnexion(self, connectemp, auth_url)
+            auth_window = auth_gui.FenetreConnexion(self, co_temporaire, auth_url)
             auth_window.grab_set()
             principal.wait_window(auth_window)
 
@@ -96,14 +100,29 @@ class App(Frame):
         # Une fois qu'on a les tokens, créer la connexion
 
         if token_manager.app_token_exist():
-            self.connec = ITwython.Connec(self.app_key, self.app_secret, self.user_key, self.user_secret)
-            erreur = self.connec.erreur
+            self.connexion = ITwython.Connexion(self.app_key, self.app_secret, self.user_key, self.user_secret)
+            erreur = self.connexion.erreur
         else:
             erreur = "no_app_tokens"
-            self.connec = None
+            self.connexion = None
 
-        if not (self.connec is None) and self.connec.exist:
-            self.ajout_widget()
+        # Si la connexion existe
+        if not (self.connexion is None) and self.connexion.existe:
+            # On ajoute les widgets
+            self.sidebar = Sidebar(self)
+            self.sidebar.grid(column=0, row=0, sticky="nse")
+            self.sidebar.grid_propagate(0)
+            self.sidebar.rowconfigure(0, weight=1)
+
+            self.cadre_tweet = EnvoiTweet(self)
+            self.cadre_tweet.grid(column=1, row=0)
+
+            self.tl = TimeLine(self, stream_connection=self.stream_connection, static_connection=self.static_connection)
+            self.tl.grid(column=2, row=0)
+            self.tl.columnconfigure(2, weight=1)
+            self.tl.rowconfigure(0, weight=1)
+            self.columnconfigure(2, weight=1)
+            self.rowconfigure(0, weight=1)
         else:
             if erreur == "token_invalid":
                 messagebox.showwarning(
@@ -128,25 +147,9 @@ class App(Frame):
                     "Impossible de se connecter à Twitter !",
                     "Vérifiez vos paramètres réseaux et réessayez."
                 )
-            self.exist = False
+            self.existe = False
             self.parent.destroy()
             return
-
-    def ajout_widget(self):
-        self.sidebar = Sidebar(self)
-        self.sidebar.grid(column=0, row=0, sticky="nse")
-        self.sidebar.grid_propagate(0)
-        self.sidebar.rowconfigure(0, weight=1)
-
-        self.cadre_tweet = EnvoiTweet(self)
-        self.cadre_tweet.grid(column=1, row=0)
-
-        self.tl = TimeLine(self, stream_connection=self.stream_connection, static_connection=self.static_connection)
-        self.tl.grid(column=2, row=0)
-        self.tl.columnconfigure(2, weight=1)
-        self.tl.rowconfigure(0, weight=1)
-        self.columnconfigure(2, weight=1)
-        self.rowconfigure(0, weight=1)
 
 
 class EnvoiTweet(Frame):
@@ -161,7 +164,7 @@ class EnvoiTweet(Frame):
         self.static_connection = static_connection
 
         if static_connection:
-            self.connec = parent.connec
+            self.connec = parent.connexion
         else:
             self.connec = None
 
@@ -265,62 +268,8 @@ class Sidebar(Frame):
         principal.wait_window(fenetre_utilisateur)
 
 
-'''
 class TweetGUI(Frame):
-    """Cadre pour afficher un tweet unique."""
-
-    def __init__(self, parent, tweet: Tweet):
-        logger.debug("Initialisation cadre : tweet")
-        Frame.__init__(self, parent)
-        self.parent = parent
-        # self.connec = parent.connec
-
-        # On met en place le cadre du tweet
-        self.tweet = tweet
-
-        screen_name = self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
-        name = self.tweet.user.name.encode("utf-8").decode('utf-8')
-        status = self.tweet.text.encode("utf-8").decode('utf-8')
-        date = self.tweet.created_at.encode("utf-8").decode('utf-8')
-
-        # self.profile_image = Label(self, image=None)
-        try:
-            self.status = tk.Message(self, text=status, width=380, foreground="white", background="#343232",
-                                     font=('Segoe UI', 10))
-        except tk.TclError as e:
-            self.status = tk.Message(self, text=status.encode("utf-8"), width=380, foreground="white",
-                                     background="#343232", font=('Segoe UI', 10))
-            logger.error(e)
-
-        try:
-            self.name = Label(self, text=name)
-        except tk.TclError as e:
-            logger.error(e)
-            self.name = Label(self, text=name.encode("utf-8"))
-
-        try:
-            self.screen_name = Label(self, text="@" + screen_name)
-        except tk.TclError as e:
-            logger.error(e)
-
-        self.date = Label(self, text=date)
-
-        self.profile_picture = ProfilePictureGUI(self, self.tweet)
-        # self.fav_count = Label(self, text="0")
-        # self.rt_count = Label(self, text="1")
-
-        self.profile_picture.pack()
-        self.name.pack()
-        self.screen_name.pack()
-        self.status.pack()
-        self.date.pack()
-        # self.fav_count.pack()
-        # self.rt_count.pack()
-'''
-
-
-class TweetGUI(Frame):
-    """Cadre pour afficher un tweet unique."""
+    """Cadre pour afficher un tweet unique, avec la photo de profil associée."""
 
     def __init__(self, parent, tweet: Tweet, timeline):
         logger.debug("Initialisation cadre : TweetGUI")
@@ -411,32 +360,32 @@ class TweetGUI(Frame):
         # self.rt_count.grid(column=3, row=5, pady=2)
         self.icone_rt.grid(column=2, row=0, pady=2, padx=00, sticky="E")
 
-        def clic_fav(event):
-            logger.debug('Clic fav : ' + self.id)
-            self.timeline.parent.connec.fav(self.id)
-            self.fav_variable.set(chr(int("E1CF", 16)))
-            # On ne change pas de Label, on change juste le texte
+    def clic_fav(self):
+        logger.debug('Clic fav : ' + self.id)
+        self.timeline.parent.connec.fav(self.id)
+        self.fav_variable.set(chr(int("E1CF", 16)))
+        # On ne change pas de Label, on change juste le texte
 
-        def clic_rt(event):
-            logger.debug('Clic RT : ' + self.id)
-            self.timeline.parent.connec.retweet(self.id)
-            # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
+    def clic_rt(self):
+        logger.debug('Clic RT : ' + self.id)
+        self.timeline.parent.connec.retweet(self.id)
+        # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
 
-        # def rt_off(event):
-        #     print("annule retweet")
-        #     # annuler le retweet
-        #     self.timeline.parent.connec.unretweet(self.id)
-        #     self.icone_rt_on.grid_forget()
+    # def rt_off(self):
+    #     print("annule retweet")
+    #     # annuler le retweet
+    #     self.timeline.parent.connexion.unretweet(self.id)
+    #     self.icone_rt_on.grid_forget()
 
-        def clic_reply(event):
-            logger.debug('Clic reply : ' + self.id)
-            # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
-            self.icone_reply['state'] = "disabled"
+    def clic_reply(self):
+        logger.debug('Clic reply : ' + self.id)
+        # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
+        self.icone_reply['state'] = "disabled"
 
         # BINDING
-        self.icone_fav.bind("<Button-1>", clic_fav)
-        self.icone_rt.bind("<Button-1>", clic_rt)
-        self.icone_reply.bind("<Button-1>", clic_reply)
+        self.icone_fav.bind("<Button-1>", self.clic_fav)
+        self.icone_rt.bind("<Button-1>", self.clic_rt)
+        self.icone_reply.bind("<Button-1>", self.clic_reply)
 
 
 class ProfilePictureGUI(Frame):
@@ -509,7 +458,7 @@ class TimeLine(Frame):
         self.ligne = 0
 
         if static_connection:
-            tweets_data = self.parent.connec.get_home_timeline(count=50)
+            tweets_data = self.parent.connexion.get_home_timeline(count=50)
             # Example de réponse dans dev_assets/list_tweets
 
             print(tweets_data)
@@ -517,8 +466,8 @@ class TimeLine(Frame):
                 self.add_data(tweet)
 
         if stream_connection:
-            self.streamer = ITwython.MyStreamer(self, parent.app_key, parent.app_secret,
-                                                parent.user_key, parent.user_secret)
+            self.streamer = ITwython.ConnexionStream(self, parent.app_key, parent.app_secret,
+                                                     parent.user_key, parent.user_secret)
 
             def async_stream():
                 # On utilise une autre notation que with="followings" car with est un mot clé réservé de python
@@ -598,10 +547,10 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, stream_connection=True, static_connection=True, frozen=frozen)
+    app = App(principal, connexion_stream=True, connexion_statique=True, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
-    if app.exist:
+    if app.existe:
         app.grid(sticky="nsew")
         app.columnconfigure(1, weight=1)
         app.rowconfigure(0, weight=1)

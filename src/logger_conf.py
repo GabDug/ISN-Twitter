@@ -5,7 +5,7 @@ from sys import stdout
 class Log:
     # On crée un logger : c'est pour gérer les logs de l'application
     # On peux utiliser logger.debug(), logger.info(), logger.warning(), logger.error()
-    # Permet la mise en page des logs, leur lecture sur un fichier même sans console (en .exe)
+    # Permet la mise en page des logs, leur lecture sur un fichier même sans console (si lancé en .exe par exemple)
 
     # On crée le logger
     logger = logging.getLogger(__name__)
@@ -33,4 +33,4 @@ class Log:
     logger.addHandler(ch)
     logger.addHandler(f)
 
-    logger.info("Starting logger")
+    logger.info("Démarrage du logger.")

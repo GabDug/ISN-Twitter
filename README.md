@@ -1,12 +1,12 @@
-# ISN Twitter (TwISN or Twysn)
-Small project created for high school
+# Twysn : ISN Twitter Project
+Small project created for high school.
 
 We aim to create a simple Twitter client, allowing user to perform basics Twitter actions such as tweeting or getting a
-timeline updated. Comments (and some variables) in french as it is mandatory to do this way.
+timeline updated. Comments (and some variables) are in french as it is mandatory to do it this way.
 
 We used :
-- Python 3.6
-- Tkinter
+- Python 3.6.1
+- Tkinter (and ttk)
 - Twython: [Doc](https://twython.readthedocs.io), [Github](https://github.com/ryanmcgrath/twython)
 - Mttkinter 
 
@@ -24,10 +24,10 @@ Here is some documentation from Microsoft :
     - Guidelines for forms layout page 305
 
 ## Setup
-Put the tokens in a file "assets/app_tokens", as explained in the "assets/app_tokens" file
+Put the tokens in a file "assets/app_tokens", as explained in the "assets/app_tokens_example" file
 
 ## License
 
-- TwISN is distributed under the GNU AGPL license. Please see LICENSE.md. 
+- Twysn is distributed under the GNU AGPL license. Please see LICENSE.md. 
 - mttkinter is distributed under the GNU LGPL license.
 - TWITTER, TWEET, RETWEET and the Twitter logo are trademarks of Twitter, Inc. or its affiliates.

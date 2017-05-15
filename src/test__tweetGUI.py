@@ -55,7 +55,7 @@ class TweetGUI(Frame):
         style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
 
         self.parent = parent
-        # self.connec = parent.connec
+        # self.connexion = parent.connexion
 
         # On met en place le cadre du tweet
 

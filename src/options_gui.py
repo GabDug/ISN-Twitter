@@ -1,17 +1,12 @@
 import tkinter as tk
 from tkinter.ttk import *
 
-
-
 import logger_conf
 import path_finder
 from ITwython import User
 from token_manager import delete_tokens
 
 logger = logger_conf.Log.logger
-
-
-# TODO Faire menu clic droit pour copier/coller
 
 
 class FenetreOptions(tk.Toplevel):
@@ -22,7 +17,7 @@ class FenetreOptions(tk.Toplevel):
         self.overrideredirect(False)
 
         # TODO Choisir entre TwISN ou Twyisn
-        self.title("TwISN")
+        self.title("Twysn")
 
         frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()
         icon = tk.PhotoImage(file=chemin_absolu)
@@ -72,20 +67,12 @@ class FenetreOptions(tk.Toplevel):
             logger.error("Impossible de quitter.")
             pass
 
-    def connexion(self):
-        from main_app import final
-        logger.debug("Code entré : " + str(self.pin_variable.get()))
-
-        # Si on n'est pas en train de faire la mise en page (pas debug)
-        if not self.test:
-            final(self, self.connec_temporaire, self.pin_variable.get())
-        self.destroy()
-
 
 # Permet d'éxécuter le code uniquement si lancé
 # Pour tester
 if __name__ == "__main__":
     from dev_assets import user_example
+
     root = tk.Tk()
     r = FenetreOptions(root, User(user_example.c), test=True)
     r.grab_set()

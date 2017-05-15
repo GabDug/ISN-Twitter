@@ -7,6 +7,7 @@ logger = logger_conf.Log.logger
 
 
 class PathFinder:
+    """Classe qui fournit les chemins des fichiers en fonction du contexte (en développement, en .exe...)"""
     @staticmethod
     def get_cache_directory() -> str:
         # Si l'application est en .exe
@@ -73,7 +74,7 @@ class PathFinder:
         return chemin_absolu
 
     @staticmethod
-    def getDataDirectory() -> str:
+    def get_data_directory() -> str:
         if getattr(sys, 'frozen', False):
             chemin_relatif = "secrets"
             chemin_absolu = os.path.abspath(os.path.dirname(sys.executable) + "/" + chemin_relatif)

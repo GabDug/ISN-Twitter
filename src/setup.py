@@ -5,15 +5,17 @@ from multiprocessing import Queue
 
 from cx_Freeze import setup, Executable
 
-# Add the argument build so we can run setup.py as usual
+# Cx_freeze n'importe pas Queue si on ne lui dit pas manuellement. "noinspection" inidque que l'import ne doit pas
+# être supprimé par l'IDE (l'IDE va le supprimer automatiquement puisqu'il ne parait pas utilisé dans ce fichier)
+
 # Ajoute l'argument build pour lancer setup.py normalement au lieu de "python setup.py -build"
 sys.argv.append("build")
 
-# Get the python interpreter path directory
 # On récupère le chemin du dossier python
 interpreter_path = os.path.dirname(sys.executable)
 
-# Ajoute les fichiers
+# Ajoute les fichiers suivants
+# r"" permet de conserver les slashs/antislashs sans les échapper.
 include_files = [r"{0}\DLLs\tcl86t.dll".format(interpreter_path),
                  r"{0}\DLLs\tk86t.dll".format(interpreter_path),
                  "lib/mttkinter.py",
@@ -42,9 +44,9 @@ executables = [
     Executable('main_app.py', base=base, icon="../assets/twisn.ico")
 ]
 
-setup(name='TwISN',
-      version='0.1',
-      description='Simple Twitter client.',
+setup(name='Twysn',
+      version='1.0',
+      description='Simple client Twitter.',
       options={"build_exe": {"includes": includes, "include_files": include_files}},
       executables=executables
       )

@@ -1,7 +1,6 @@
 import datetime
 
 from twython import *
-from multiprocessing import Queue
 
 import logger_conf
 
@@ -54,16 +53,20 @@ class Tweet:
 
 
 # Connections
-class ConnecTemporaire:
+class ConnexionTemporaire:
+    """Objet qui crée une connexion twython temporaire, utilisé à la première connexion pour récupérer les jetons 
+    définitifs."""
+
     def __init__(self, _app_token, _app_secret):
         self.app_token = _app_token
         self.app_secret = _app_secret
-        logger.debug("Temp App Token          : " + self.app_token)
-        logger.debug("Temp App Token Secret   : " + self.app_secret)
+        # logger.debug("Temp App Token          : " + self.app_token)
+        # logger.debug("Temp App Token Secret   : " + self.app_secret)
 
+        # On crée une connexion Twython avec Twitter, mais sans utilisateur spécifique
         self.connection = Twython(self.app_token, self.app_secret)
+        # On obtient des jetons (tokens) temporaires avec un lien pour s'authentifier
         auth = self.connection.get_authentication_tokens()
-        # On obtient des jetons (tokens) temporaires pour l'authentification à renvoyer avec un code PIN
 
         self.user_token = auth['oauth_token']
         self.user_secret = auth['oauth_token_secret']
@@ -74,9 +77,10 @@ class ConnecTemporaire:
         logger.debug("Lien de connexion       :" + self.auth_url)
 
     def final(self, oauth_verifier):
+        """Permet de récupérer des jetons définitifs avec des jetons temporaires et le code obtenu sur la page web."""
         # On demande des jetons permanents avec les jetons temporaires et le code PIN
-        logger.debug("App Token         : " + self.app_token)
-        logger.debug("App Token Secret  : " + self.app_secret)
+        # logger.debug("App Token         : " + self.app_token)
+        # logger.debug("App Token Secret  : " + self.app_secret)
         logger.debug("User Token        : " + self.user_token)
         logger.debug("User Token Secret : " + self.user_secret)
         co = Twython(self.app_token, self.app_secret, self.user_token, self.user_secret)
@@ -90,16 +94,21 @@ class ConnecTemporaire:
             return False, str(e)
 
 
-class Connec(Twython):
+class Connexion(Twython):
+    """Classe qui hérite de Twython, ajoute des vérifications et gère les erreurs. Gère la RestAPI de Twitter."""
+
     def __init__(self, app_key, app_secret, user_key, user_secret, real=True):
+        # Si le programme n'est pas en debug
         if real:
             try:
                 Twython.__init__(self, app_key, app_secret, user_key, user_secret)
                 cred = self.verify_credentials()
-                logger.debug(str(cred).encode("utf-8").decode("utf-8"))
+                logger.debug("Credentials : " + str(cred).encode("utf-8").decode("utf-8"))
+
+                # L'utilisateur qui s'est connecté
                 self.user = User(cred)
                 self._debugrate()
-                self.exist = True
+                self.existe = True
                 self.fake = False
                 self.erreur = None
             except TwythonError as e:
@@ -112,15 +121,16 @@ class Connec(Twython):
                 else:
                     logger.error("Impossible de créer la connection Twython ! Erreur : " + str(e))
                     self.erreur = True
-                self.exist = False
+                self.existe = False
                 return
         else:
             logger.warning("Debug : Connexion non créée.")
-            self.exist = True
+            self.existe = True
             self.fake = True
             self.erreur = None
             return
         # TODO Mettre try/except ?
+        # TODO vérifier si l'attribut .twython peut être supprimé
         self.twython = self
         # except AttributeError as e:
         #     logger.debug("Erreur ! Connexion impossible!")
@@ -129,12 +139,14 @@ class Connec(Twython):
         logger.debug("     " + str(self))
 
     def tweeter(self, message_du_tweet):
+        """Fonction pour envoyer un tweet (status)."""
+        # Si on n'est pas en debug
         if not self.fake:
             try:
                 cred = self.update_status(status=message_du_tweet)
-                logger.debug("TweetGUI envoyé : " + str(cred))
+                logger.debug("Tweet envoyé : " + str(cred))
                 self._debugrate()
-                return True, "TweetGUI envoyé !"
+                return True, "Tweet envoyé !"
 
             except TwythonError as e:
                 logger.debug("Erreur envoi tweet : " + str(e))
@@ -142,29 +154,23 @@ class Connec(Twython):
         else:
             return True, "Fake tweet envoyé !"
 
-    def fav(self, id: str):
-        self.create_favorite(id=id)
+    def fav(self, id_tweet: str):
+        self.create_favorite(id=id_tweet)
 
-    def defav(self, id: str):
+    def defav(self, id_tweet: str):
         pass
 
-    # on ne peux pas appeler la fonction retweet car une fonction de Twython existe déjà
-    def retweeter(self, id: str):
-        self.retweet(id=id)
+    # On ne peux pas appeler la fonction retweet car une fonction de Twython existe déjà (risque d'override)
+    def retweeter(self, id_tweet: str):
+        self.retweet(id=id_tweet)
 
-    def unretweeter(self, id: str):
-        # Je crois qu'il faut supprimer un tweet pour unretweet
-        pass
-        # annuler le retweet
-
-    def reply(self, id: str):
+    def reply(self, id_tweet: str):
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur (On va réutiliser tweeter et pas faire reply)
         pass
 
     # Underscore au début du nom -> convention pour fonction interne
     def _debugrate(self):
-        """Affiche les infos sur les limites d'utilisation dans la console"""
-        # J'ai "fixé" la fonction qui ne fait plus crasher et est plus propre : elle fait tjr la même chose
+        """Affiche les infos sur les limites d'utilisation dans la console."""
         logger.debug("Debugrate : " + repr(self))
 
         a = self.get_lastfunction_header('x-rate-limit-limit')
@@ -180,18 +186,17 @@ class Connec(Twython):
         if a is None and b is None and c is None:
             logger.debug("  No header provided")
 
-            # def __repr__(self):
-            #     return "<Connec : {0}>".format(self)
 
-
-class MyStreamer(TwythonStreamer):
+class ConnexionStream(TwythonStreamer):
+    """Classe qui hérite de la connection TwythonStreamer : se connecte à la Stream API de Twitter pour récupérer
+     les tweets en direct."""
     def __init__(self, timeline, *args, **kwargs):
         TwythonStreamer.__init__(self, *args, **kwargs)
 
         # On garde l'objet timeline pour pouvoir renvoyer les tweets à cet objet
         self.timeline = timeline
 
-    # Fonctions lancées à la réception d'informations (succès ou échec)
+    # Fonction appelée lors de la réception avec succès d'un message (Tweet ou demande de suppresion d'un tweet)
     def on_success(self, data):
         logger.debug(data)
         if 'text' in data:
@@ -203,8 +208,13 @@ class MyStreamer(TwythonStreamer):
 
         self.timeline.add_data(data)
 
+    # Fonction appelée lors d'une erreur
     def on_error(self, status_code, data):
         logger.error("Erreur ! " + status_code)
 
-        # On peut se déconnecter après une erreur
-        # self.disconnect()
+    # Fonction appelée si timeout des requêtes
+    # def on_timeout(self):
+    #     pass
+
+    # On peut se déconnecter après une erreur ou un timeout
+    # self.disconnect()

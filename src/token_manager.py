@@ -87,6 +87,12 @@ def delete_tokens():
     if os.path.isfile(chemin_user_tokens):
         os.remove(chemin_user_tokens)
 
+def tokens_exist() -> bool:
+    """Renvoie True si les tokens utilisateurs et d'application sont sauvegardés."""
+    if os.path.isfile(chemin_user_tokens) and os.path.isfile(chemin_app_tokens):
+        return True
+    else:
+        return False
 
 def user_token_exist() -> bool:
     """Renvoie True si les tokens utilisateurs sont sauvegardés."""
