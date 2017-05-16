@@ -6,7 +6,6 @@ from tkinter.ttk import *
 
 from PIL import Image, ImageTk
 
-
 import logger_conf
 import path_finder
 from ITwython import User
@@ -48,7 +47,7 @@ class ProfilePictureGUI(Frame):
 
             # TODO Ajouter exception pour ouverture fichier
             self.pil_image = Image.open(self.save)
-            self.pil_image.thumbnail((100,100))
+            self.pil_image.thumbnail((100, 100))
             self.photo = ImageTk.PhotoImage(self.pil_image)
 
             label = Label(self, image=self.photo)
@@ -63,6 +62,8 @@ class FenetreUtilisateur(tk.Toplevel):
         tk.Toplevel.__init__(self, parent)
         self.overrideredirect(False)
 
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
         # TODO Choisir entre TwISN ou Twyisn
         self.title("TwISN")
 
@@ -83,10 +84,15 @@ class FenetreUtilisateur(tk.Toplevel):
         style.configure("TButton", font=('Segoe UI', 10))
 
         fenetre = Frame(self)
-        fenetre.pack()
+        fenetre.grid(row=0, column=0, sticky="nsew")
+        fenetre.columnconfigure(0, weight=1)
+        fenetre.rowconfigure(0, weight=1)
 
         cadre = Frame(fenetre)
-        cadre.grid(row=0, column=0, padx=40, pady=20)
+        cadre.grid(row=0, sticky="nsew", column=0, padx=10, pady=10)
+        cadre.columnconfigure(0, weight=1)
+        cadre.rowconfigure(0, weight=1)
+
 
         cadre_titre = Frame(cadre)
         cadre_titre.grid(row=0, column=1)
@@ -104,12 +110,12 @@ class FenetreUtilisateur(tk.Toplevel):
             nom_at = Label(cadre_titre, text="@" + screen_name, font=('Segoe UI Semilight', 18))
         except tk.TclError as e:
             logger.error(e)
-            nom_at = Label(cadre_titre, text=screen_name.encode("utf-8"),  font=('Segoe UI Semilight', 18))
+            nom_at = Label(cadre_titre, text=screen_name.encode("utf-8"), font=('Segoe UI Semilight', 18))
         # nom_long = Label(cadre_titre, text="Gabriel Dugny",
         #                  font=('Segoe UI Semilight', 24))
         # nom_at = Label(cadre_titre, text="@DUGNYCHON",
         #                font=('Segoe UI Semilight', 18))
-        nom_long.grid(column=0, row=0, sticky="w", pady=10)
+        nom_long.grid(column=0, row=0, sticky="ws", pady=10)
         nom_at.grid(column=1, row=0, sticky="ws", pady=10)
 
         cadre_description = Frame(cadre)
@@ -133,7 +139,9 @@ class FenetreUtilisateur(tk.Toplevel):
         location.grid(row=1, column=0, sticky="w")
 
         cadre_compteurs = Frame(cadre)
-        cadre_compteurs.grid(row=2, column=0, sticky="ws")
+        cadre_compteurs.grid(row=2, column=0, columnspan=2, sticky="ws")
+        cadre_compteurs.columnconfigure(0, weight=1)
+        cadre_compteurs.rowconfigure(0, weight=1)
 
         message_tweets = Label(cadre_compteurs, text="Tweets")
         compteur_tweets = Label(cadre_compteurs, text=self.utilisateur.statuses_count)
@@ -145,7 +153,7 @@ class FenetreUtilisateur(tk.Toplevel):
         compteur_abonnes = Label(cadre_compteurs, text=self.utilisateur.followers_count)
 
         self.profile_picture = ProfilePictureGUI(cadre, self.utilisateur)
-        self.profile_picture.grid(row=0, column=0, rowspan=2, sticky="w")
+        self.profile_picture.grid(row=0, column=0, rowspan=1, sticky="w")
 
         nom_long.grid(column=0, row=0, sticky="w", pady=10)
         nom_at.grid(column=1, row=0, sticky="w", pady=10)
@@ -153,16 +161,17 @@ class FenetreUtilisateur(tk.Toplevel):
         # logo.grid(row=1, column=0, columnspan=2)
         message_tweets.grid(row=0, column=0, sticky="w")
         compteur_tweets.grid(row=1, column=0, sticky="w")
-        message_abonnements.grid(row=0, column=1, sticky="w")
-        compteur_abonnements.grid(row=1, column=1, sticky="w")
-        message_abonnes.grid(row=0, column=2, sticky="w")
-        compteur_abonnes.grid(row=1, column=2, sticky="w")
+        message_abonnements.grid(row=0, column=1, padx=10, sticky="we")
+        compteur_abonnements.grid(row=1, column=1, padx=10, sticky="we")
+        message_abonnes.grid(row=0, column=2, sticky="e")
+        compteur_abonnes.grid(row=1, column=2, sticky="e")
 
 
 # Permet d'éxécuter le code uniquement si lancé
 # Pour tester
 if __name__ == "__main__":
     from dev_assets import user_example
+
     root = tk.Tk()
     r = FenetreUtilisateur(root, User(user_example.c), test=True)
     r.grab_set()

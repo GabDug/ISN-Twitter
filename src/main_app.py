@@ -321,7 +321,7 @@ class TweetGUI(Frame):
         separateur = Frame(self, width=580, height=8)
         separateur.grid(column=0, row=6, columnspan=5)
 
-        self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir)
+        self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir, tag=self.tweet.id)
 
         cadre_actions = Frame(self, cursor='dot', width=580, height=50, style="TLabel")
         # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
@@ -344,6 +344,7 @@ class TweetGUI(Frame):
                                  style="TLabel")
 
         self.profile_picture.grid(column=0, row=0, pady=0, rowspan=1, sticky='NW')
+
         self.name.grid(column=1, row=0, pady=0, sticky='S')
         self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
         self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
@@ -361,8 +362,11 @@ class TweetGUI(Frame):
         # self.rt_count.grid(column=3, row=5, pady=2)
         self.icone_rt.grid(column=2, row=0, pady=2, padx=00, sticky="E")
 
-
         # BINDING
+        self.profile_picture.bindtags(self.tweet.id)
+        self.name.bindtags(self.tweet.id)
+        self.screen_name.bindtags(self.tweet.id)
+        self.bind_class(self.tweet.id, "<Button-1>", lambda __: self.clic_utilisateur())
         self.icone_fav.bind("<Button-1>", lambda __: self.clic_fav())
         self.icone_rt.bind("<Button-1>", lambda __: self.clic_rt())
         self.icone_reply.bind("<Button-1>", lambda __: self.clic_reply())
@@ -379,23 +383,22 @@ class TweetGUI(Frame):
         self.timeline.parent.connexion.retweeter(self.id)
         # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
 
-    # def rt_off(self):
-    #     print("annule retweet")
-    #     # annuler le retweet
-    #     self.timeline.parent.connexion.unretweet(self.id)
-    #     self.icone_rt_on.grid_forget()
-
     def clic_reply(self):
         logger.debug('Clic reply sur tweet (id) : ' + self.id)
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
         self.icone_reply['state'] = "disabled"
 
-
+    def clic_utilisateur(self):
+        logger.debug('Clic avatar sur tweet (id) : ' + self.id + ", utilisateur : " + self.tweet.user.id)
+        fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.tweet.user)
+        fenetre_utilisateur.grab_set()
+        principal.wait_window(fenetre_utilisateur)
 
 
 class ProfilePictureGUI(Frame):
-    def __init__(self, parent, tweet: Tweet, cache_dir=path_finder.PathFinder.get_cache_directory()):
+    def __init__(self, parent, tweet: Tweet, cache_dir=path_finder.PathFinder.get_cache_directory(), tag=None):
         logger.debug("Initialisation cadre : photo de profil")
+
         Frame.__init__(self, parent)
 
         self.lien = tweet.user.profile_image_url_normal
@@ -428,6 +431,7 @@ class ProfilePictureGUI(Frame):
 
             label = Label(self, image=self.photo)
             label.pack(padx=5, pady=5)
+            self.label.bindtags(tag)
 
         thread_tl = threading.Thread(target=action_async, daemon=True)
         thread_tl.start()
@@ -466,7 +470,7 @@ class TimeLine(Frame):
         self.ligne = 0
 
         if static_connection:
-            tweets_data = self.parent.connexion.get_home_timeline(count=50)
+            tweets_data = self.parent.connexion.get_home_timeline(count=25)
             # Example de réponse dans dev_assets/list_tweets
 
             print(tweets_data)
@@ -492,8 +496,6 @@ class TimeLine(Frame):
         # À utiliser pour debuguer, il faut commenter tout ce qui est async et connexion
         if not static_connection and not stream_connection:
             self.peupler()
-
-
 
     def peupler(self):
         """Ajoute de fausses données pour travailler sur la mise en page hors-ligne,"
@@ -536,8 +538,8 @@ class TimeLine(Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         logger.debug(self.scrollbar.get())
 
-        height = event.height - 4
-        self.canvas.itemconfigure("self.frame", height=height)
+        # height = event.height - 4
+        # self.canvas.itemconfigure("self.frame", height=height)
 
 
 # On commence le code ici
