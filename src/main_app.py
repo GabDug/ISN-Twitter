@@ -46,7 +46,7 @@ def final(fenetre, co_temporaire, oauth_verifier):
 # Classe qui hérite de Frame
 class App(Frame):
     def __init__(self, parent, connexion_stream=True, connexion_statique=True, frozen=False):
-        """connexion_stream et connexion_statique permettent d'activer ou de désactiver les deux types de connection
+        """connexion_stream et connexion_statique permettent d'activer ou de désactiver les deux types de connexion
          pour travailler ur la mise en page sans se faire bloquer par les limitations."""
         # On définit le cadre dans l'objet App (inutile car pas kwargs**...)
         Frame.__init__(self, parent)
@@ -157,17 +157,17 @@ class EnvoiTweet(Frame):
     """Définit le cadre avec les widgets pour envoyer un tweet, ainsi que les fonctions pour répondre aux actions des
     boutons des widgets nécessaires (bouton envoyer...)"""
 
-    def __init__(self, parent, static_connection=True):
+    def __init__(self, parent, connexion_statique=True):
         logger.debug("Initialisation cadre : envoi de tweet")
         Frame.__init__(self, parent)
         self.parent = parent
 
-        self.static_connection = static_connection
+        self.connexion_statique = connexion_statique
 
-        if static_connection:
-            self.connec = parent.connexion
+        if connexion_statique:
+            self.connexion = parent.connexion
         else:
-            self.connec = None
+            self.connexion = None
 
         # On crée un cadre pour ajouter une marge égale
         self.cadre = Frame(self)
@@ -192,8 +192,8 @@ class EnvoiTweet(Frame):
         # On récupère le message depuis le widget d'entrée de label
         message = self.tweet_message.get()
 
-        # Si la connection est activé (pas debug)
-        if self.static_connection:
+        # Si la connexion est activé (pas debug)
+        if self.connexion_statique:
             def action_async():
                 logger.debug("Tweet : Début action_async")
 
@@ -202,7 +202,7 @@ class EnvoiTweet(Frame):
                 self.bouton.state(["disabled"])
 
                 # On lance le tweet via ITwython
-                succes, msg = self.connec.tweeter(message)
+                succes, msg = self.connexion.tweeter(message)
 
                 logger.debug("Tweet : Succès : " + str(succes))
                 logger.debug("Tweet : Message : " + str(msg))
@@ -297,7 +297,7 @@ class TweetGUI(Frame):
         date = self.tweet.created_at.encode("utf-8").decode('utf-8')
 
         try:
-            self.status = tk.Message(self, text=status, width=480, foreground="white", background="#343232",
+            self.status = tk.Message(self, text=status, width=470, foreground="white", background="#343232",
                                      font=('Segoe UI', 10))
         except tk.TclError as e:
             self.status = tk.Message(self, text=status.encode("utf-8"), width=480, foreground="white",
@@ -318,12 +318,12 @@ class TweetGUI(Frame):
         # cadre2 = Frame(self, cursor='arrow', width=100, height=100, style="Test.TFrame")
         # cadre2.grid(column=0, row=0, rowspan=2, padx=20, pady=20, sticky='N')
 
-        separateur = Frame(self, width=500, height=8)
+        separateur = Frame(self, width=580, height=8)
         separateur.grid(column=0, row=6, columnspan=5)
 
         self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir)
 
-        cadre_actions = Frame(self, cursor='dot', width=500, height=50, style="TLabel")
+        cadre_actions = Frame(self, cursor='dot', width=580, height=50, style="TLabel")
         # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
         self.fav_count = Label(self, text="              : 1")
 
@@ -364,18 +364,19 @@ class TweetGUI(Frame):
 
         # BINDING
         self.icone_fav.bind("<Button-1>", lambda __: self.clic_fav())
-        self.icone_rt.bind("<Button-1>", self.clic_rt)
-        self.icone_reply.bind("<Button-1>", self.clic_reply)
+        self.icone_rt.bind("<Button-1>", lambda __: self.clic_rt())
+        self.icone_reply.bind("<Button-1>", lambda __: self.clic_reply())
 
     def clic_fav(self):
-        logger.debug('Clic fav : ' + self.id)
+        logger.debug('Clic fav sur tweet (id) : ' + self.id)
         self.timeline.parent.connexion.fav(self.id)
         self.fav_variable.set(chr(int("E1CF", 16)))
         # On ne change pas de Label, on change juste le texte
 
     def clic_rt(self):
-        logger.debug('Clic RT : ' + self.id)
-        self.timeline.parent.connexion.retweet(self.id)
+        logger.debug('Clic RT sur tweet (id) : ' + self.id)
+        # TODO vérifier si le compte est protégé et si on peut RT ou pas
+        self.timeline.parent.connexion.retweeter(self.id)
         # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
 
     # def rt_off(self):
@@ -385,7 +386,7 @@ class TweetGUI(Frame):
     #     self.icone_rt_on.grid_forget()
 
     def clic_reply(self):
-        logger.debug('Clic reply : ' + self.id)
+        logger.debug('Clic reply sur tweet (id) : ' + self.id)
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
         self.icone_reply['state'] = "disabled"
 
@@ -445,6 +446,9 @@ class TimeLine(Frame):
 
         self.online = stream_connection
 
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1, minsize=500)
+
         # J'ai mis le canvas en bleu pour bien voir là où il est : on est pas censé le voir mais juste le frame
         # On utilise un frame dans un canvas car pas de scrollbar sur le frame => scrollbar sur canvas
         self.canvas = tk.Canvas(self, borderwidth=0, width=580, background="blue")
@@ -489,6 +493,8 @@ class TimeLine(Frame):
         if not static_connection and not stream_connection:
             self.peupler()
 
+
+
     def peupler(self):
         """Ajoute de fausses données pour travailler sur la mise en page hors-ligne,"
         " pour empecher de se faire bloquer par Twitter à force de recréer des connexions."""
@@ -520,11 +526,18 @@ class TimeLine(Frame):
         self.ligne = self.ligne + 1
 
     def config_cadre(self, event):
+        # D'après http://stackoverflow.com/questions/43766670/how-to-resize-a-scrollable-frame-to-fill-the-canvas
+        # def onCanvasConfigure(self, event):
+
+        # width is tweaked to account for window borders
         # TODO Bloquer scroll à la fin
         logger.debug("Reconfiguration Cadre TimeLine : " + str(event))
         logger.debug(self.scrollbar.get())
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         logger.debug(self.scrollbar.get())
+
+        height = event.height - 4
+        self.canvas.itemconfigure("self.frame", height=height)
 
 
 # On commence le code ici
@@ -535,7 +548,7 @@ if __name__ == "__main__":
     principal = tk.Tk()
     principal.title("TwISN")
     principal.config(bg='pink')  # TODO remove debug
-    principal.minsize(width=850, height=300)
+    principal.minsize(width=850, height=400)
 
     principal.columnconfigure(0, weight=1)
     principal.rowconfigure(0, weight=1)

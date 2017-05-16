@@ -66,9 +66,9 @@ class ConnexionTemporaire:
         # logger.debug("Temp App Token Secret   : " + self.app_secret)
 
         # On crée une connexion Twython avec Twitter, mais sans utilisateur spécifique
-        self.connection = Twython(self.app_token, self.app_secret)
+        self.connexion = Twython(self.app_token, self.app_secret)
         # On obtient des jetons (tokens) temporaires avec un lien pour s'authentifier
-        auth = self.connection.get_authentication_tokens()
+        auth = self.connexion.get_authentication_tokens()
 
         self.user_token = auth['oauth_token']
         self.user_secret = auth['oauth_token_secret']
@@ -121,7 +121,7 @@ class Connexion(Twython):
                     logger.error("Jetons incorrects ! Erreur : " + str(e))
                     self.erreur = "app_token_invalid"
                 else:
-                    logger.error("Impossible de créer la connection Twython ! Erreur : " + str(e))
+                    logger.error("Impossible de créer la connexion Twython ! Erreur : " + str(e))
                     self.erreur = True
                 self.existe = False
                 return
@@ -190,7 +190,7 @@ class Connexion(Twython):
 
 
 class ConnexionStream(TwythonStreamer):
-    """Classe qui hérite de la connection TwythonStreamer : se connecte à la Stream API de Twitter pour récupérer
+    """Classe qui hérite de la connexion TwythonStreamer : se connecte à la Stream API de Twitter pour récupérer
      les tweets en direct."""
     def __init__(self, timeline, *args, **kwargs):
         TwythonStreamer.__init__(self, *args, **kwargs)
