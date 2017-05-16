@@ -360,6 +360,12 @@ class TweetGUI(Frame):
         # self.rt_count.grid(column=3, row=5, pady=2)
         self.icone_rt.grid(column=2, row=0, pady=2, padx=00, sticky="E")
 
+
+        # BINDING
+        self.icone_fav.bind("<Button-1>", self.clic_fav)
+        self.icone_rt.bind("<Button-1>", self.clic_rt)
+        self.icone_reply.bind("<Button-1>", self.clic_reply)
+
     def clic_fav(self):
         logger.debug('Clic fav : ' + self.id)
         self.timeline.parent.connec.fav(self.id)
@@ -382,10 +388,7 @@ class TweetGUI(Frame):
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
         self.icone_reply['state'] = "disabled"
 
-        # BINDING
-        self.icone_fav.bind("<Button-1>", self.clic_fav)
-        self.icone_rt.bind("<Button-1>", self.clic_rt)
-        self.icone_reply.bind("<Button-1>", self.clic_reply)
+
 
 
 class ProfilePictureGUI(Frame):
