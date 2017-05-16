@@ -216,6 +216,34 @@ class EnvoiTweet(Frame):
             th = threading.Thread(target=action_async, daemon=True)
             th.start()
 
+    def respond(self):
+        # On récupère le message depuis le widget d'entrée de label
+        message = self.tweet_message.get()
+
+        # Si la connexion est activé (pas debug)
+        if self.connexion_statique:
+            def action_async():
+                logger.debug("Tweet : Début action_async")
+
+                # On désactive l'entrée utilisateur pendant l'envoi du tweet
+                self.tweet.state(["disabled"])
+                self.bouton.state(["disabled"])
+
+                # On lance le tweet via ITwython
+                succes, msg = self.connexion.respond(message)
+
+                logger.debug("Tweet : Succès : " + str(succes))
+                logger.debug("Tweet : Message : " + str(msg))
+
+                # On lance les actions de retour
+                self.callback(succes, msg)
+                logger.debug("Tweet : Fin action_async")
+                return
+
+            # On lance l'action du tweet dans un thread asynchrone
+            th = threading.Thread(target=action_async, daemon=True)
+            th.start()
+
     def callback(self, succes: bool, msg_):
         """Éxecuté après l'envoi du tweet, pour afficher un message de confirmation ou d'erreur."""
         # Si le tweet a bien été envoyé
@@ -325,6 +353,7 @@ class TweetGUI(Frame):
 
         cadre_actions = Frame(self, cursor='dot', width=580, height=50, style="TLabel")
         # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
+        # TODO mdrrr mais ça on ne l'utilise pas encore, c'était l'exemple qu'on avait fait en ISN ^^
         self.fav_count = Label(self, text="              : 1")
 
         self.fav_variable = tk.StringVar()
@@ -385,10 +414,59 @@ class TweetGUI(Frame):
     #     self.timeline.parent.connexion.unretweet(self.id)
     #     self.icone_rt_on.grid_forget()
 
+    #def Respond(self, tweet : Tweet):
+    #    #name = Tweet["user"]["screen_name"]
+    #    #text = self.parent.EnvoiTweet()
+    #    msg = input("enter msg here")
+    #    text = " ".join(msg)
+    #    self.update_status(status=text, in_reply_to_status_id=Tweet["id"])
+    def respond(self):
+        # On récupère le message depuis le widget d'entrée de label
+        message = self.tweet_message.get()
+
+        # Si la connexion est activé (pas debug)
+        if self.connexion_statique:
+            def action_async():
+                logger.debug("Tweet : Début action_async")
+
+                # On désactive l'entrée utilisateur pendant l'envoi du tweet
+                self.tweet.state(["disabled"])
+                self.bouton.state(["disabled"])
+
+                # On lance le tweet via ITwython
+                succes, msg = self.connexion.respond(message)
+
+                logger.debug("Tweet : Succès : " + str(succes))
+                logger.debug("Tweet : Message : " + str(msg))
+
+                # On lance les actions de retour
+                self.callback(succes, msg)
+                logger.debug("Tweet : Fin action_async")
+                return
+
+            # On lance l'action du tweet dans un thread asynchrone
+            th = threading.Thread(target=action_async, daemon=True)
+            th.start()
+
     def clic_reply(self):
         logger.debug('Clic reply sur tweet (id) : ' + self.id)
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
         self.icone_reply['state'] = "disabled"
+
+        self.tweet_message = tk.StringVar()
+        self.message_resultat = tk.StringVar()
+        self.cadre = Frame(self)
+        self.cadre.grid(column=0, row=0, pady=10, padx=10)
+        self.label = Label(self.cadre, text="Nouveau tweet :")
+        self.tweet = Entry(self.cadre, textvariable=self.tweet_message)
+        self.bouton = Button(self.cadre, text="Tweeter", command=self.respond())
+        self.message = Label(self.cadre, textvariable=self.message_resultat)
+
+        self.label.grid(column=0, row=0)
+        self.tweet.grid(column=0, row=1)
+        self.bouton.grid(column=0, row=2)
+        self.message.grid(column=0, row=3)
+        laabel = EnvoiTweet
 
 
 
