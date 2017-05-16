@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 import threading
@@ -362,19 +363,19 @@ class TweetGUI(Frame):
 
 
         # BINDING
-        self.icone_fav.bind("<Button-1>", self.clic_fav)
+        self.icone_fav.bind("<Button-1>", lambda __: self.clic_fav())
         self.icone_rt.bind("<Button-1>", self.clic_rt)
         self.icone_reply.bind("<Button-1>", self.clic_reply)
 
     def clic_fav(self):
         logger.debug('Clic fav : ' + self.id)
-        self.timeline.parent.connec.fav(self.id)
+        self.timeline.parent.connexion.fav(self.id)
         self.fav_variable.set(chr(int("E1CF", 16)))
         # On ne change pas de Label, on change juste le texte
 
     def clic_rt(self):
         logger.debug('Clic RT : ' + self.id)
-        self.timeline.parent.connec.retweet(self.id)
+        self.timeline.parent.connexion.retweet(self.id)
         # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
 
     # def rt_off(self):
@@ -550,7 +551,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, connexion_stream=True, connexion_statique=True, frozen=frozen)
+    app = App(principal, connexion_stream=False, connexion_statique=True, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.existe:

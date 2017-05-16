@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import datetime
 
 from twython import *
@@ -198,7 +200,10 @@ class ConnexionStream(TwythonStreamer):
 
     # Fonction appelée lors de la réception avec succès d'un message (Tweet ou demande de suppresion d'un tweet)
     def on_success(self, data):
-        logger.debug(data)
+        try:
+            logger.debug(str(repr(data)))
+        except UnicodeEncodeError:
+            pass
         if 'text' in data:
             try:
                 logger.debug(data["user"]["screen_name"].encode("utf-8"), data["user"]["name"].encode("utf-8"),
