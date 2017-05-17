@@ -167,7 +167,7 @@ class Connexion(Twython):
         self.retweet(id=id_tweet)
 
     def reply(self, id_tweet: str):
-        # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur (On va réutiliser tweeter et pas faire reply)
+        # TODO fonction pour répondre à 1 utilisateur (On va réutiliser tweeter et pas faire reply)
         pass
 
     # Underscore au début du nom -> convention pour fonction interne

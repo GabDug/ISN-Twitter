@@ -23,7 +23,7 @@ class ProfilePictureGUI(Frame):
 
         self.lien = user.profile_image_url
 
-        # TODO Fixer le lien si l'app est frozen
+
         # On supprime les : et / de l'url pour en faire un nom de fichier
         save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
         # On obtient le répertoire de sauvegarde des photos
@@ -64,8 +64,7 @@ class FenetreUtilisateur(tk.Toplevel):
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
-        # TODO Choisir entre TwISN ou Twyisn
-        self.title("TwISN")
+        self.title("Twysn")
 
         frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()
         icon = tk.PhotoImage(file=chemin_absolu)

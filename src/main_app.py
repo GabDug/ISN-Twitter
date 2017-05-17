@@ -487,7 +487,6 @@ class TimeLine(Frame):
                 # On utilise un unpacking avec double splat http://deusyss.developpez.com/tutoriels/Python/args_kwargs/
                 self.streamer.user(**{"with": "followings"})
                 return
-                # TODO voir si ça marche le return
 
             # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
             thread_tl = threading.Thread(target=async_stream, daemon=True)
