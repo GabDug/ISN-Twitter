@@ -169,6 +169,9 @@ class EnvoiTweet(Frame):
         else:
             self.connexion = None
 
+        self.id_reponse = None
+        self.tweet_reponse = None
+
         # On crée un cadre pour ajouter une marge égale
         self.cadre = Frame(self)
         self.cadre.grid(column=0, row=0, pady=10, padx=10)
@@ -188,6 +191,12 @@ class EnvoiTweet(Frame):
         self.bouton.grid(column=0, row=2)
         self.message.grid(column=0, row=3)
 
+    def mode_reponse(self, tweet: Tweet):
+        self.labelreponse = Label(self.cadre, text="Répondre à @" + tweet.user.screen_name)
+        self.labelreponse.grid(column=0, row=4)
+        self.id_reponse = tweet.id
+        self.tweet_reponse = tweet
+
     def tweeter(self):
         # On récupère le message depuis le widget d'entrée de label
         message = self.tweet_message.get()
@@ -201,8 +210,14 @@ class EnvoiTweet(Frame):
                 self.tweet.state(["disabled"])
                 self.bouton.state(["disabled"])
 
-                # On lance le tweet via ITwython
-                succes, msg = self.connexion.tweeter(message)
+                if self.tweet_reponse is None:
+                    # On lance le tweet via ITwython
+                    logger.debug("Tweet normal")
+                    succes, msg = self.connexion.tweeter(message)
+                else:
+                    logger.debug("Tweet réponse à @" + self.tweet_reponse.user.screen_name)
+                    succes, msg = self.connexion.tweeter("@" + self.tweet_reponse.user.screen_name + ' ' + message,
+                                                         reponse=self.tweet_reponse.id)
 
                 logger.debug("Tweet : Succès : " + str(succes))
                 logger.debug("Tweet : Message : " + str(msg))
@@ -258,13 +273,13 @@ class Sidebar(Frame):
 
     def clic_options(self):
         logger.debug("Clic options")
-        fenetre_options = options_gui.FenetreOptions(self, self.parent.connec.user)
+        fenetre_options = options_gui.FenetreOptions(self, self.parent.connexion.user)
         fenetre_options.grab_set()
         principal.wait_window(fenetre_options)
 
     def clic_utilisateur(self):
         logger.debug("Clic utilisateur")
-        fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.parent.connec.user)
+        fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.parent.connexion.user)
         fenetre_utilisateur.grab_set()
         principal.wait_window(fenetre_utilisateur)
 
@@ -323,8 +338,9 @@ class TweetGUI(Frame):
 
         self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir, tag=self.tweet.id)
 
-        cadre_actions = Frame(self, cursor='dot', width=580, height=50, style="TLabel")
+        cadre_actions = Frame(self, width=580, height=50, style="TLabel")
         # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
+        # TODO mdrrr mais ça on ne l'utilise pas encore, c'était l'exemple qu'on avait fait en ISN ^^
         self.fav_count = Label(self, text="              : 1")
 
         self.fav_variable = tk.StringVar()
@@ -373,9 +389,17 @@ class TweetGUI(Frame):
 
     def clic_fav(self):
         logger.debug('Clic fav sur tweet (id) : ' + self.id)
-        self.timeline.parent.connexion.fav(self.id)
-        self.fav_variable.set(chr(int("E1CF", 16)))
-        # On ne change pas de Label, on change juste le texte
+        if not self.tweet.favorited:
+            logger.debug('Tweet non fav')
+            self.timeline.parent.connexion.fav(self.id)
+            self.fav_variable.set(chr(int("E1CF", 16)))
+            self.tweet.favorited = True
+            # On ne change pas de Label, on change juste le texte
+        else:
+            logger.debug('Tweet fav')
+            self.timeline.parent.connexion.defav(self.id)
+            self.fav_variable.set(chr(int("E1CE", 16)))
+            self.tweet.favorited = False
 
     def clic_rt(self):
         logger.debug('Clic RT sur tweet (id) : ' + self.id)
@@ -386,7 +410,8 @@ class TweetGUI(Frame):
     def clic_reply(self):
         logger.debug('Clic reply sur tweet (id) : ' + self.id)
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
-        self.icone_reply['state'] = "disabled"
+        # self.icone_reply['state'] = "disabled"
+        self.timeline.parent.cadre_tweet.mode_reponse(self.tweet)
 
     def clic_utilisateur(self):
         logger.debug('Clic avatar sur tweet (id) : ' + self.id + ", utilisateur : " + self.tweet.user.id)
@@ -431,7 +456,7 @@ class ProfilePictureGUI(Frame):
 
             label = Label(self, image=self.photo)
             label.pack(padx=5, pady=5)
-            self.label.bindtags(tag)
+            # self.label.bindtags(tag)
 
         thread_tl = threading.Thread(target=action_async, daemon=True)
         thread_tl.start()
@@ -473,8 +498,8 @@ class TimeLine(Frame):
             tweets_data = self.parent.connexion.get_home_timeline(count=25)
             # Example de réponse dans dev_assets/list_tweets
 
-            print(tweets_data)
-            for tweet in tweets_data:
+            # print(tweets_data)
+            for tweet in reversed(tweets_data):
                 self.add_data(tweet)
 
         if stream_connection:
@@ -487,6 +512,7 @@ class TimeLine(Frame):
                 # On utilise un unpacking avec double splat http://deusyss.developpez.com/tutoriels/Python/args_kwargs/
                 self.streamer.user(**{"with": "followings"})
                 return
+                # TODO voir si ça marche le return
 
             # On défini le thread comme daemon : dépend du thread principal, se ferme si le principal quitte
             thread_tl = threading.Thread(target=async_stream, daemon=True)
