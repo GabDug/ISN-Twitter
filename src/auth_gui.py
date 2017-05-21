@@ -30,7 +30,7 @@ class FenetreConnexion(tk.Toplevel):
         self.pin_variable = tk.StringVar()
         self.pin_link = auth_url
 
-        # Définit un état de test pour la mise en page : si True, alors les actions ne sont pas réalisées
+        # Définit un état de cadre_status pour la mise en page : si True, alors les actions ne sont pas réalisées
         self.test = test
 
         style = Style()

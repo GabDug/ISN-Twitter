@@ -23,8 +23,6 @@ import token_manager
 import user_gui
 from ITwython import Tweet
 
-import time
-
 try:
     from lib import mttkinter as tk
 except ModuleNotFoundError:
@@ -300,47 +298,38 @@ class TweetGUI(Frame):
         self.parent = parent
         self.timeline = timeline
         self.tweet = tweet
+        self.id = tweet.id
 
         style = Style()
         style.configure("Test.TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("Name.TLabel", foreground="white", background="#343232", font=('Segoe UI', 14))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
-        style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
+        style.configure("Separateur.TFrame", foreground="white", background="white", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
 
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
         style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
 
-        self.id = tweet.id
-        screen_name = self.tweet.user.screen_name.encode("utf-8").decode('utf-8')
-        name = self.tweet.user.name.encode("utf-8").decode('utf-8')
-        # TODO mettre une limite de caractere ? (pour ne pas avoir de probleme avec l'affichage)
-        status = self.tweet.text.encode("utf-8").decode('utf-8')
-        date = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(self.tweet.created_at, '%a %b %d %H:%M:%S +0000 %Y'))
 
-        self.test = Frame(self, width=480, height=120)
-
+        self.cadre_status = Frame(self, width=480, height=120)
         try:
-            self.status = tk.Message(self.test, text=status, width=450, foreground="white", background="#343232",
+            self.status = tk.Message(self.cadre_status, text=self.tweet.text,
+                                     width=450, foreground="white", background="#343232",
                                      font=('Segoe UI', 10))
-        except tk.TclError:
-            self.status = tk.Message(self.test, text=status.encode("utf-8"), width=450, foreground="white",
-                                     background="#343232", font=('Segoe UI', 10))
-
-        try:
-            self.name = Label(self, text=name, style="Name.TLabel")
-        except tk.TclError:
-            self.name = Label(self, text=name.encode("utf-8"))
-
-        try:
-            self.screen_name = Label(self, text="@" + screen_name)
         except tk.TclError as e:
-            pass
+            logger.error(str(e))
+            self.status = tk.Message(self.cadre_status, text=self.tweet.text.encode("utf-8"),
+                                     width=450, foreground="white", background="#343232",
+                                     font=('Segoe UI', 10))
+        self.screen_name = Label(self, text="@" + self.tweet.user.screen_name, style="TLabel")
+        try:
+            self.name = Label(self, text=self.tweet.user.name, style="Name.TLabel")
+        except tk.TclError as e:
+            self.name = Label(self, text=self.tweet.user.name.encode("utf-8"), style="Name.TLabel")
+        self.date = Label(self, text=self.tweet.date)
 
-        self.date = Label(self, text=date)
-
-        separateur = Frame(self, width=580, height=2, style='TEntry')
+        separateur = Frame(self, width=580, height=2, style='Separateur.TFrame')
         separateur.grid(column=0, row=6, pady=4, columnspan=5)
 
         self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir, tag=self.tweet.id)
@@ -365,7 +354,7 @@ class TweetGUI(Frame):
 
         self.name.grid(column=1, row=0, pady=0, sticky='S')
         self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
-        self.test.grid(column=1, row=1, columnspan=2, sticky='NW')
+        self.cadre_status.grid(column=1, row=1, columnspan=2, sticky='NW')
         # self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
         self.status.grid(column=0, row=0)
         self.date.grid(column=0, columnspan=2, row=3, pady=0, sticky='W')
@@ -383,7 +372,7 @@ class TweetGUI(Frame):
         self.icone_rt.grid(column=2, row=0, pady=2, padx=00, sticky="E")
 
         Frame.grid_propagate(self)
-        self.test.grid_propagate(0)
+        self.cadre_status.grid_propagate(0)
 
         # BINDING
         self.profile_picture.bindtags(self.tweet.id)
@@ -453,6 +442,7 @@ class TweetGUI(Frame):
         fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.tweet.user)
         fenetre_utilisateur.grab_set()
         principal.wait_window(fenetre_utilisateur)
+
 
 class ProfilePictureGUI(Frame):
     def __init__(self, parent, tweet: Tweet, cache_dir=path_finder.PathFinder.get_cache_directory(), tag=None):
@@ -531,8 +521,6 @@ class TimeLine(Frame):
         if static_connection:
             tweets_data = self.parent.connexion.get_home_timeline(count=25)
             # Example de réponse dans dev_assets/list_tweets
-
-            # print(tweets_data)
             for tweet in reversed(tweets_data):
                 self.add_data(tweet)
 
@@ -577,13 +565,13 @@ class TimeLine(Frame):
         if 'text' in data:
             tweet = TweetGUI(self.frame, Tweet(data), self)
             tweet.grid(row=self.ligne, column=0)
-            logger.debug(self.ligne)
+            logger.debug(str(self.ligne) + " " + tweet.tweet.id)
             self.ligne = self.ligne + 1
             # self.scrollbar.grid_configure(rowspan=self.ligne + 1)
 
     def add_tweet(self, tweet: TweetGUI):
         tweet.grid(row=self.ligne, column=0)
-        logger.debug(self.ligne)
+        logger.debug(self.ligne + " " + tweet.id)
         self.ligne = self.ligne + 1
 
     def config_cadre(self, event):
@@ -626,7 +614,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, connexion_stream=False,frozen=frozen)
+    app = App(principal, connexion_stream=False, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.existe:

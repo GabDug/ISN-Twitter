@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import datetime
+import re
+from datetime import datetime
+from datetime import timezone
 
 from twython import *
 
@@ -18,11 +20,11 @@ class User:
         # self.id = id
         # self.screen_name = screen_name
         self.id = data["id_str"]
-        self.name = data["name"]
-        self.screen_name = data["screen_name"]
+        self.name = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["name"]).encode("utf-8").decode('utf-8')
+        self.screen_name = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["screen_name"]).encode("utf-8").decode('utf-8')
 
-        self.description = data["description"]
-        self.location = data["location"]
+        self.description = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["description"]).encode("utf-8").decode('utf-8')
+        self.location = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["location"]).encode("utf-8").decode('utf-8')
 
         self.profile_image_url_normal = data["profile_image_url"]
         self.profile_image_url = self.profile_image_url_normal.replace("_normal", "")
@@ -42,9 +44,13 @@ class Tweet:
     def __init__(self, data, *args, **kwargs):
         self.data = data
         self.created_at = data["created_at"]
+        self.date = (datetime.strptime(self.created_at, '%a %b %d %H:%M:%S %z %Y').replace(
+            tzinfo=timezone.utc).astimezone(tz=None).strftime('Le %d/%m/%Y à %H:%M:%S'))
         # TODO self.date = self.created_at mais en objet date
         self.id = data["id_str"]
-        self.text = data["text"]
+        # self.text = data["text"]
+        self.text = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["text"])
+        # logger.warning(self.text)
         self.user = User(data["user"])
 
         self.favorited = data["favorited"]
@@ -105,7 +111,7 @@ class Connexion(Twython):
             try:
                 Twython.__init__(self, app_key, app_secret, user_key, user_secret)
                 cred = self.verify_credentials()
-                logger.debug("Credentials : " + str(cred).encode("utf-8").decode("utf-8"))
+                # logger.debug("Credentials : " + str(cred).encode("utf-8").decode("utf-8"))
 
                 # L'utilisateur qui s'est connecté
                 self.user = User(cred)
@@ -180,7 +186,6 @@ class Connexion(Twython):
     def fav(self, id_tweet: str):
         self.create_favorite(id=id_tweet)
 
-
     def defav(self, id_tweet: str):
         self.destroy_favorite(id=id_tweet)
 
@@ -216,8 +221,8 @@ class Connexion(Twython):
         if b is not None:
             logger.debug("  x-rate-limit-remaining: " + str(b))
         if c is not None:
-            logger.debug("  x-rate-limit-reset: " + str(datetime.datetime.fromtimestamp(int(c))))
-            logger.debug("  H: " + str(datetime.datetime.now()))
+            logger.debug("  x-rate-limit-reset: " + str(datetime.fromtimestamp(int(c))))
+            logger.debug("  H: " + str(datetime.now()))
         if a is None and b is None and c is None:
             logger.debug("  No header provided")
 
@@ -234,16 +239,16 @@ class ConnexionStream(TwythonStreamer):
 
     # Fonction appelée lors de la réception avec succès d'un message (Tweet ou demande de suppresion d'un tweet)
     def on_success(self, data):
-        try:
-            logger.debug(str(repr(data)))
-        except UnicodeEncodeError:
-            pass
-        if 'text' in data:
-            try:
-                logger.debug(data["user"]["screen_name"].encode("utf-8"), data["user"]["name"].encode("utf-8"),
-                             data['text'].encode("utf-8"), data["created_at"].encode("utf-8"))
-            except TypeError as e:
-                logger.error(e)
+        # try:
+        #     logger.debug(str(repr(data)))
+        # except UnicodeEncodeError:
+        #     pass
+        # if 'text' in data:
+        #     try:
+        #         logger.debug(data["user"]["screen_name"].encode("utf-8"), data["user"]["name"].encode("utf-8"),
+        #                      data['text'].encode("utf-8"), data["created_at"].encode("utf-8"))
+        #     except TypeError as e:
+        #         logger.error(e)
 
         self.timeline.add_data(data)
 
