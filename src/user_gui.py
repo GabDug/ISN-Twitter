@@ -129,7 +129,7 @@ class FenetreUtilisateur(tk.Toplevel):
             description = Label(cadre_description, text=description.encode("utf-8"))
 
         try:
-            location = Label(cadre_description, text="@" + location)
+            location = Label(cadre_description, text=location)
         except tk.TclError as e:
             logger.error(e)
             location = Label(cadre_description, text=location.encode("utf-8"))

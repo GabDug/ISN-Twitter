@@ -36,7 +36,8 @@ logger = logger_conf.Log.logger
 # Classe qui hérite de Frame
 class App(Frame):
     def __init__(self, parent, connexion_stream=True, connexion_statique=True, frozen=False):
-        """connexion_stream et connexion_statique permettent d'activer ou de désactiver les deux types de connexion
+        """Cadre principal. Contient les divers widgets ainsi que les attributs nécessaires à l'application.
+        connexion_stream et connexion_statique permettent d'activer ou de désactiver les deux types de connexion
          pour travailler ur la mise en page sans se faire bloquer par les limitations."""
         # On définit le cadre dans l'objet App (inutile car pas kwargs**...)
         Frame.__init__(self, parent)
@@ -182,18 +183,17 @@ class EnvoiTweet(Frame):
         self.cadre.grid(column=0, row=0, pady=10, padx=10)
 
         # On met en place le cadre d'envoi de tweet
-        self.tweet_message = tk.StringVar()
         self.message_resultat = tk.StringVar()
 
         # TODO Utiliser un champ Text de plusieurs lignes
-        self.label = Label(self.cadre, text="Nouveau tweet :")
-        self.tweet = Entry(self.cadre, textvariable=self.tweet_message)
+        self.titre = Label(self.cadre, text="Écrire un nouveau Tweet")
+        self.texte_tweet = tk.Text(self.cadre, width=30, height=6, wrap='word', font=('Segoe UI', 10))
         self.bouton = Button(self.cadre, text="Tweeter", command=self.tweeter)
         self.message = Label(self.cadre, textvariable=self.message_resultat)
 
-        self.label.grid(column=0, row=0)
-        self.tweet.grid(column=0, row=1)
-        self.bouton.grid(column=0, row=2)
+        self.titre.grid(column=0, row=0)
+        self.texte_tweet.grid(column=0, row=1)
+        self.bouton.grid(column=0, row=2, pady=10)
         self.message.grid(column=0, row=3)
 
     def mode_reponse(self, tweet: Tweet):
@@ -204,15 +204,15 @@ class EnvoiTweet(Frame):
 
     def tweeter(self):
         # On récupère le message depuis le widget d'entrée de label
-        message = self.tweet_message.get()
+        message = self.texte_tweet.get("1.0", 'end-1c')
 
         # Si la connexion est activé (pas debug)
-        if self.connexion_statique:
+        if self.connexion_statique and message != "":
             def action_async():
                 logger.debug("Tweet : Début action_async")
 
-                # On désactive l'entrée utilisateur pendant l'envoi du tweet
-                self.tweet.state(["disabled"])
+                # On désactive le bouton pendant l'envoi du tweet
+                # self.texte_tweet.configure(state="disabled")
                 self.bouton.state(["disabled"])
 
                 if self.tweet_reponse is None:
@@ -248,7 +248,7 @@ class EnvoiTweet(Frame):
                 "Erreur : {0}".format(msg_)
             )
         # On réactive l'entrée utilisateur
-        self.tweet.state(["!disabled"])
+        # self.texte_tweet.configure(state="normal")
         self.bouton.state(["!disabled"])
 
 
@@ -637,6 +637,7 @@ if __name__ == "__main__":
     principal.title("Twysn")
     principal.config(bg='#343232')
     principal.minsize(width=850, height=400)
+    principal.call('tk', 'scaling', 2.0)
 
     principal.columnconfigure(0, weight=1)
     principal.rowconfigure(0, weight=1)
