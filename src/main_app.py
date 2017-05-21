@@ -4,10 +4,14 @@ import sys
 import threading
 import tkinter as tk
 import urllib
+# noinspection PyUnresolvedReferences
+from multiprocessing import Queue
 from tkinter import messagebox
 from tkinter.ttk import *
 from urllib.request import urlopen
 
+# noinspection PyUnresolvedReferences
+import requests
 from PIL import Image, ImageTk
 
 import ITwython
@@ -25,20 +29,6 @@ except ModuleNotFoundError:
     import mttkinter as tk
 
 logger = logger_conf.Log.logger
-
-
-# TODO déplacer final dans App en staticmethod
-def final(fenetre, co_temporaire, oauth_verifier):
-    succes, login_credentials = co_temporaire.final(oauth_verifier)
-    if succes:
-        user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
-        logger.debug("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
-        token_manager.set_tokens(user_token, user_token_secret)
-        logger.debug(token_manager.get_all_tokens())
-        fenetre.destroy()
-    else:
-        # TODO Voir
-        logger.debug("Erreur à gérer")
 
 
 # Structure d'après
@@ -144,6 +134,7 @@ class App(Frame):
                     "Vérifiez la présence du fichier data/app_tokens !"
                 )
             else:
+                # TODO Cas executé aussi si fermeture fenêtre auth_gui
                 messagebox.showerror(
                     "Impossible de se connecter à Twitter !",
                     "Vérifiez vos paramètres réseaux et réessayez."
@@ -605,7 +596,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, connexion_stream=False, connexion_statique=True, frozen=frozen)
+    app = App(principal, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.existe:
