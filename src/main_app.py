@@ -637,7 +637,7 @@ if __name__ == "__main__":
     principal.title("Twysn")
     principal.config(bg='#343232')
     principal.minsize(width=850, height=400)
-    # principal.call('tk', 'scaling', 2.0)
+    principal.call('tk', 'scaling', 2.0)
 
     principal.columnconfigure(0, weight=1)
     principal.rowconfigure(0, weight=1)
