@@ -26,7 +26,6 @@ except ModuleNotFoundError:
 
 logger = logger_conf.Log.logger
 
-
 # TODO déplacer final dans App en staticmethod
 def final(fenetre, co_temporaire, oauth_verifier):
     succes, login_credentials = co_temporaire.final(oauth_verifier)
@@ -605,7 +604,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, connexion_stream=False, connexion_statique=True, frozen=frozen)
+    app = App(principal, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.existe:
