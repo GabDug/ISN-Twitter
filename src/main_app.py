@@ -316,11 +316,13 @@ class TweetGUI(Frame):
         status = self.tweet.text.encode("utf-8").decode('utf-8')
         date = self.tweet.created_at.encode("utf-8").decode('utf-8')
 
+        self.test = Frame(self, width=480, height=120)
+
         try:
-            self.status = tk.Message(self, text=status, width=470, foreground="white", background="#343232",
+            self.status = tk.Message(self.test, text=status, width=450, foreground="white", background="#343232",
                                      font=('Segoe UI', 10))
         except tk.TclError as e:
-            self.status = tk.Message(self, text=status.encode("utf-8"), width=480, foreground="white",
+            self.status = tk.Message(self.test, text=status.encode("utf-8"), width=450, foreground="white",
                                      background="#343232", font=('Segoe UI', 10))
 
         try:
@@ -335,18 +337,12 @@ class TweetGUI(Frame):
 
         self.date = Label(self, text=date)
 
-        # cadre2 = Frame(self, cursor='arrow', width=100, height=100, style="Test.TFrame")
-        # cadre2.grid(column=0, row=0, rowspan=2, padx=20, pady=20, sticky='N')
-
         separateur = Frame(self, width=580, height=8)
         separateur.grid(column=0, row=6, columnspan=5)
 
         self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir, tag=self.tweet.id)
 
         cadre_actions = Frame(self, width=580, height=50, style="TLabel")
-        # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
-        # TODO mdrrr mais ça on ne l'utilise pas encore, c'était l'exemple qu'on avait fait en ISN ^^
-        self.fav_count = Label(self, text="              : 1")
 
         self.fav_variable = tk.StringVar()
         if not tweet.favorited:
@@ -356,10 +352,8 @@ class TweetGUI(Frame):
         self.icone_fav = Label(cadre_actions, textvariable=self.fav_variable, font=('Segoe MDL2 Assets', 14),
                                style="TLabel")
 
-        self.rt_count = Label(self, text="            : 1")
         self.icone_rt = Label(cadre_actions, text=chr(int("E1CA", 16)), font=('Segoe MDL2 Assets', 14),
                               style="TLabel")
-        # chr(int("E10E", 16))
 
         self.icone_reply = Label(cadre_actions, text=chr(int("E15F", 16)), font=('Segoe MDL2 Assets', 14),
                                  style="TLabel")
@@ -368,7 +362,9 @@ class TweetGUI(Frame):
 
         self.name.grid(column=1, row=0, pady=0, sticky='S')
         self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
-        self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
+        self.test.grid(column=1, row=1, columnspan=2, sticky='NW')
+        #self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
+        self.status.grid(column=0, row=0)
         self.date.grid(column=1, columnspan=2, row=2, pady=0, sticky='E')
 
         cadre_actions.grid(column=0, row=3, columnspan=3, padx=0, pady=0, sticky='E')
@@ -382,6 +378,9 @@ class TweetGUI(Frame):
 
         # self.rt_count.grid(column=3, row=5, pady=2)
         self.icone_rt.grid(column=2, row=0, pady=2, padx=00, sticky="E")
+
+        Frame.grid_propagate(self)
+        self.test.grid_propagate(0)
 
         # BINDING
         self.profile_picture.bindtags(self.tweet.id)
