@@ -302,6 +302,7 @@ class TweetGUI(Frame):
         style = Style()
         style.configure("Test.TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
+        style.configure("Name.TLabel", foreground="white", background="#343232", font=('Segoe UI', 14))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
@@ -321,13 +322,13 @@ class TweetGUI(Frame):
         try:
             self.status = tk.Message(self.test, text=status, width=450, foreground="white", background="#343232",
                                      font=('Segoe UI', 10))
-        except tk.TclError as e:
+        except tk.TclError:
             self.status = tk.Message(self.test, text=status.encode("utf-8"), width=450, foreground="white",
                                      background="#343232", font=('Segoe UI', 10))
 
         try:
-            self.name = Label(self, text=name)
-        except tk.TclError as e:
+            self.name = Label(self, text=name, style="Name.TLabel")
+        except tk.TclError:
             self.name = Label(self, text=name.encode("utf-8"))
 
         try:
@@ -636,7 +637,7 @@ if __name__ == "__main__":
     principal.title("Twysn")
     principal.config(bg='#343232')
     principal.minsize(width=850, height=400)
-    principal.call('tk', 'scaling', 2.0)
+    # principal.call('tk', 'scaling', 2.0)
 
     principal.columnconfigure(0, weight=1)
     principal.rowconfigure(0, weight=1)
@@ -652,7 +653,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, frozen=frozen)
+    app = App(principal, connexion_stream=False,frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.existe:
