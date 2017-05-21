@@ -23,6 +23,8 @@ import token_manager
 import user_gui
 from ITwython import Tweet
 
+import time
+
 try:
     from lib import mttkinter as tk
 except ModuleNotFoundError:
@@ -315,7 +317,7 @@ class TweetGUI(Frame):
         name = self.tweet.user.name.encode("utf-8").decode('utf-8')
         # TODO mettre une limite de caractere ? (pour ne pas avoir de probleme avec l'affichage)
         status = self.tweet.text.encode("utf-8").decode('utf-8')
-        date = self.tweet.created_at.encode("utf-8").decode('utf-8')
+        date = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(self.tweet.created_at, '%a %b %d %H:%M:%S +0000 %Y'))
 
         self.test = Frame(self, width=480, height=120)
 
