@@ -337,8 +337,8 @@ class TweetGUI(Frame):
 
         self.date = Label(self, text=date)
 
-        separateur = Frame(self, width=580, height=8)
-        separateur.grid(column=0, row=6, columnspan=5)
+        separateur = Frame(self, width=580, height=2, style='TEntry')
+        separateur.grid(column=0, row=6, pady=4, columnspan=5)
 
         self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir, tag=self.tweet.id)
 
