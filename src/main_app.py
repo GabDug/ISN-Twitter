@@ -364,11 +364,11 @@ class TweetGUI(Frame):
         self.name.grid(column=1, row=0, pady=0, sticky='S')
         self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
         self.test.grid(column=1, row=1, columnspan=2, sticky='NW')
-        #self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
+        # self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
         self.status.grid(column=0, row=0)
-        self.date.grid(column=1, columnspan=2, row=2, pady=0, sticky='E')
+        self.date.grid(column=0, columnspan=2, row=3, pady=0, sticky='W')
 
-        cadre_actions.grid(column=0, row=3, columnspan=3, padx=0, pady=0, sticky='E')
+        cadre_actions.grid(column=2, row=3, columnspan=1, padx=0, pady=0, sticky='E')
 
         self.icone_reply.grid(column=0, row=0, pady=2, padx=00, sticky="")
         # self.likes_count.grid(column=1, row=5, pady=2)
@@ -412,18 +412,6 @@ class TweetGUI(Frame):
         self.timeline.parent.connexion.retweeter(self.id)
         # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
 
-    # def rt_off(self):
-    #     print("annule retweet")
-    #     # annuler le retweet
-    #     self.timeline.parent.connexion.unretweet(self.id)
-    #     self.icone_rt_on.grid_forget()
-
-    #def Respond(self, tweet : Tweet):
-    #    #name = Tweet["user"]["screen_name"]
-    #    #text = self.parent.EnvoiTweet()
-    #    msg = input("enter msg here")
-    #    text = " ".join(msg)
-    #    self.update_status(status=text, in_reply_to_status_id=Tweet["id"])
     def respond(self):
         # On récupère le message depuis le widget d'entrée de label
         message = self.tweet_message.get()
@@ -463,23 +451,6 @@ class TweetGUI(Frame):
         fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.tweet.user)
         fenetre_utilisateur.grab_set()
         principal.wait_window(fenetre_utilisateur)
-        self.tweet_message = tk.StringVar()
-        self.message_resultat = tk.StringVar()
-        self.cadre = Frame(self)
-        self.cadre.grid(column=0, row=0, pady=10, padx=10)
-        self.label = Label(self.cadre, text="Nouveau tweet :")
-        self.tweet = Entry(self.cadre, textvariable=self.tweet_message)
-        self.bouton = Button(self.cadre, text="Tweeter", command=self.respond())
-        self.message = Label(self.cadre, textvariable=self.message_resultat)
-
-        self.label.grid(column=0, row=0)
-        self.tweet.grid(column=0, row=1)
-        self.bouton.grid(column=0, row=2)
-        self.message.grid(column=0, row=3)
-        laabel = EnvoiTweet
-
-
-
 
 class ProfilePictureGUI(Frame):
     def __init__(self, parent, tweet: Tweet, cache_dir=path_finder.PathFinder.get_cache_directory(), tag=None):
