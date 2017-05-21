@@ -1,2 +1,2 @@
-<put your app token here>
-<put your app token secret here, don't forget to rename the file to "app_tokens_example"!>
+<put your app token (in base 64) here>
+<put your app token secret (in base 64) here, don't forget to rename the file to "app_tokens_example"!>

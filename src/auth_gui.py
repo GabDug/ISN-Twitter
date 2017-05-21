@@ -82,13 +82,15 @@ class FenetreConnexion(tk.Toplevel):
             webbrowser.open_new(self.pin_link)
 
     def connexion(self):
-        from main_app import final
+        # from main_app import final
+        import main_app
         logger.debug("Code entré : " + str(self.pin_variable.get()))
 
         # Si on n'est pas en train de faire la mise en page (pas debug)
         if not self.test:
             # On renvoie le code pin reçu à main_app
-            final(self, self.connec_temporaire, self.pin_variable.get())
+            main_app.App.final(self, self.connec_temporaire, self.pin_variable.get())
+        # On ferme la fenêtre de connexion
         self.destroy()
 
 

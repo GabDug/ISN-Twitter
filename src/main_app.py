@@ -21,7 +21,7 @@ from ITwython import Tweet
 
 try:
     from lib import mttkinter as tk
-except:
+except ModuleNotFoundError:
     import mttkinter as tk
 
 logger = logger_conf.Log.logger
@@ -64,7 +64,7 @@ class App(Frame):
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="black", background="#343232", font=('Segoe UI', 10))
-        style.configure("Test.TFrame", foreground="black", background="green", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="black", background="#343232", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
 
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
@@ -151,6 +151,20 @@ class App(Frame):
             self.existe = False
             self.parent.destroy()
             return
+
+    @staticmethod
+    def final(fenetre, co_temporaire, code_pin):
+        """Fonction qui sauvegarde les tokens définitifs avec le code PIN et la connexion temporaire."""
+        succes, login_credentials = co_temporaire.final(code_pin)
+        if succes:
+            user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
+            logger.debug("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
+            token_manager.set_tokens(user_token, user_token_secret)
+            logger.debug(token_manager.get_all_tokens())
+            fenetre.destroy()
+        else:
+            # Si succes == False alors login_credentials est un message d'erreur
+            logger.error("Erreur fatale : " + login_credentials)
 
 
 class EnvoiTweet(Frame):
@@ -295,7 +309,7 @@ class TweetGUI(Frame):
         self.tweet = tweet
 
         style = Style()
-        style.configure("Test.TFrame", foreground="white", background="red", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
@@ -466,7 +480,7 @@ class TimeLine(Frame):
     def __init__(self, parent, stream_connection=True, static_connection=True):
         logger.debug("Initialisation cadre : timeline")
         style = Style()
-        style.configure("Test.TFrame", foreground="white", background="purple", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         Frame.__init__(self, parent, style="Test.TFrame")
         self.parent = parent
 
@@ -569,12 +583,12 @@ class TimeLine(Frame):
 
 # On commence le code ici
 if __name__ == "__main__":
-    logger.info("Démarrage de TwISN")
+    logger.info("Démarrage de Twysn")
 
     # Principal est la racine de l'app
     principal = tk.Tk()
-    principal.title("TwISN")
-    principal.config(bg='pink')  # TODO remove debug
+    principal.title("Twysn")
+    principal.config(bg='#343232')
     principal.minsize(width=850, height=400)
 
     principal.columnconfigure(0, weight=1)
@@ -602,5 +616,5 @@ if __name__ == "__main__":
     principal.mainloop()
     app.quit()
     principal.quit()
-    logger.info("Fermeture de TwISN")
+    logger.info("Fermeture de Twysn")
     sys.exit()
