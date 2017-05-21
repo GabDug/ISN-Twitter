@@ -4,10 +4,14 @@ import sys
 import threading
 import tkinter as tk
 import urllib
+# noinspection PyUnresolvedReferences
+from multiprocessing import Queue
 from tkinter import messagebox
 from tkinter.ttk import *
 from urllib.request import urlopen
 
+# noinspection PyUnresolvedReferences
+import requests
 from PIL import Image, ImageTk
 
 import ITwython
@@ -21,24 +25,10 @@ from ITwython import Tweet
 
 try:
     from lib import mttkinter as tk
-except:
+except ModuleNotFoundError:
     import mttkinter as tk
 
 logger = logger_conf.Log.logger
-
-
-# TODO déplacer final dans App en staticmethod
-def final(fenetre, co_temporaire, oauth_verifier):
-    succes, login_credentials = co_temporaire.final(oauth_verifier)
-    if succes:
-        user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
-        logger.debug("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
-        token_manager.set_tokens(user_token, user_token_secret)
-        logger.debug(token_manager.get_all_tokens())
-        fenetre.destroy()
-    else:
-        # TODO Voir
-        logger.debug("Erreur à gérer")
 
 
 # Structure d'après
@@ -64,7 +54,7 @@ class App(Frame):
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="black", background="#343232", font=('Segoe UI', 10))
-        style.configure("Test.TFrame", foreground="black", background="green", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="black", background="#343232", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
 
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
@@ -144,6 +134,7 @@ class App(Frame):
                     "Vérifiez la présence du fichier data/app_tokens !"
                 )
             else:
+                # TODO Cas executé aussi si fermeture fenêtre auth_gui
                 messagebox.showerror(
                     "Impossible de se connecter à Twitter !",
                     "Vérifiez vos paramètres réseaux et réessayez."
@@ -151,6 +142,20 @@ class App(Frame):
             self.existe = False
             self.parent.destroy()
             return
+
+    @staticmethod
+    def final(fenetre, co_temporaire, code_pin):
+        """Fonction qui sauvegarde les tokens définitifs avec le code PIN et la connexion temporaire."""
+        succes, login_credentials = co_temporaire.final(code_pin)
+        if succes:
+            user_token, user_token_secret = login_credentials["oauth_token"], login_credentials["oauth_token_secret"]
+            logger.debug("Oauth Token : {0}, Oauth Token Secret : {1}".format(user_token, user_token_secret))
+            token_manager.set_tokens(user_token, user_token_secret)
+            logger.debug(token_manager.get_all_tokens())
+            fenetre.destroy()
+        else:
+            # Si succes == False alors login_credentials est un message d'erreur
+            logger.error("Erreur fatale : " + login_credentials)
 
 
 class EnvoiTweet(Frame):
@@ -168,6 +173,9 @@ class EnvoiTweet(Frame):
             self.connexion = parent.connexion
         else:
             self.connexion = None
+
+        self.id_reponse = None
+        self.tweet_reponse = None
 
         # On crée un cadre pour ajouter une marge égale
         self.cadre = Frame(self)
@@ -188,6 +196,12 @@ class EnvoiTweet(Frame):
         self.bouton.grid(column=0, row=2)
         self.message.grid(column=0, row=3)
 
+    def mode_reponse(self, tweet: Tweet):
+        self.labelreponse = Label(self.cadre, text="Répondre à @" + tweet.user.screen_name)
+        self.labelreponse.grid(column=0, row=4)
+        self.id_reponse = tweet.id
+        self.tweet_reponse = tweet
+
     def tweeter(self):
         # On récupère le message depuis le widget d'entrée de label
         message = self.tweet_message.get()
@@ -201,8 +215,14 @@ class EnvoiTweet(Frame):
                 self.tweet.state(["disabled"])
                 self.bouton.state(["disabled"])
 
-                # On lance le tweet via ITwython
-                succes, msg = self.connexion.tweeter(message)
+                if self.tweet_reponse is None:
+                    # On lance le tweet via ITwython
+                    logger.debug("Tweet normal")
+                    succes, msg = self.connexion.tweeter(message)
+                else:
+                    logger.debug("Tweet réponse à @" + self.tweet_reponse.user.screen_name)
+                    succes, msg = self.connexion.tweeter("@" + self.tweet_reponse.user.screen_name + ' ' + message,
+                                                         reponse=self.tweet_reponse.id)
 
                 logger.debug("Tweet : Succès : " + str(succes))
                 logger.debug("Tweet : Message : " + str(msg))
@@ -258,13 +278,13 @@ class Sidebar(Frame):
 
     def clic_options(self):
         logger.debug("Clic options")
-        fenetre_options = options_gui.FenetreOptions(self, self.parent.connec.user)
+        fenetre_options = options_gui.FenetreOptions(self, self.parent.connexion.user)
         fenetre_options.grab_set()
         principal.wait_window(fenetre_options)
 
     def clic_utilisateur(self):
         logger.debug("Clic utilisateur")
-        fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.parent.connec.user)
+        fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.parent.connexion.user)
         fenetre_utilisateur.grab_set()
         principal.wait_window(fenetre_utilisateur)
 
@@ -280,7 +300,7 @@ class TweetGUI(Frame):
         self.tweet = tweet
 
         style = Style()
-        style.configure("Test.TFrame", foreground="white", background="red", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TEntry", foreground="red", background="#343232", font=('Segoe UI', 10))
@@ -323,7 +343,7 @@ class TweetGUI(Frame):
 
         self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir, tag=self.tweet.id)
 
-        cadre_actions = Frame(self, cursor='dot', width=580, height=50, style="TLabel")
+        cadre_actions = Frame(self, width=580, height=50, style="TLabel")
         # TODO Mdr c'est quoi ça ? text="                 " sérieusement ?
         # TODO mdrrr mais ça on ne l'utilise pas encore, c'était l'exemple qu'on avait fait en ISN ^^
         self.fav_count = Label(self, text="              : 1")
@@ -374,9 +394,17 @@ class TweetGUI(Frame):
 
     def clic_fav(self):
         logger.debug('Clic fav sur tweet (id) : ' + self.id)
-        self.timeline.parent.connexion.fav(self.id)
-        self.fav_variable.set(chr(int("E1CF", 16)))
-        # On ne change pas de Label, on change juste le texte
+        if not self.tweet.favorited:
+            logger.debug('Tweet non fav')
+            self.timeline.parent.connexion.fav(self.id)
+            self.fav_variable.set(chr(int("E1CF", 16)))
+            self.tweet.favorited = True
+            # On ne change pas de Label, on change juste le texte
+        else:
+            logger.debug('Tweet fav')
+            self.timeline.parent.connexion.defav(self.id)
+            self.fav_variable.set(chr(int("E1CE", 16)))
+            self.tweet.favorited = False
 
     def clic_rt(self):
         logger.debug('Clic RT sur tweet (id) : ' + self.id)
@@ -427,7 +455,8 @@ class TweetGUI(Frame):
     def clic_reply(self):
         logger.debug('Clic reply sur tweet (id) : ' + self.id)
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
-        self.icone_reply['state'] = "disabled"
+        # self.icone_reply['state'] = "disabled"
+        self.timeline.parent.cadre_tweet.mode_reponse(self.tweet)
 
     def clic_utilisateur(self):
         logger.debug('Clic avatar sur tweet (id) : ' + self.id + ", utilisateur : " + self.tweet.user.id)
@@ -488,7 +517,7 @@ class ProfilePictureGUI(Frame):
 
             label = Label(self, image=self.photo)
             label.pack(padx=5, pady=5)
-            self.label.bindtags(tag)
+            # self.label.bindtags(tag)
 
         thread_tl = threading.Thread(target=action_async, daemon=True)
         thread_tl.start()
@@ -498,7 +527,7 @@ class TimeLine(Frame):
     def __init__(self, parent, stream_connection=True, static_connection=True):
         logger.debug("Initialisation cadre : timeline")
         style = Style()
-        style.configure("Test.TFrame", foreground="white", background="purple", font=('Segoe UI', 10))
+        style.configure("Test.TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         Frame.__init__(self, parent, style="Test.TFrame")
         self.parent = parent
 
@@ -530,8 +559,8 @@ class TimeLine(Frame):
             tweets_data = self.parent.connexion.get_home_timeline(count=25)
             # Example de réponse dans dev_assets/list_tweets
 
-            print(tweets_data)
-            for tweet in tweets_data:
+            # print(tweets_data)
+            for tweet in reversed(tweets_data):
                 self.add_data(tweet)
 
         if stream_connection:
@@ -601,12 +630,12 @@ class TimeLine(Frame):
 
 # On commence le code ici
 if __name__ == "__main__":
-    logger.info("Démarrage de TwISN")
+    logger.info("Démarrage de Twysn")
 
     # Principal est la racine de l'app
     principal = tk.Tk()
-    principal.title("TwISN")
-    principal.config(bg='pink')  # TODO remove debug
+    principal.title("Twysn")
+    principal.config(bg='#343232')
     principal.minsize(width=850, height=400)
 
     principal.columnconfigure(0, weight=1)
@@ -623,7 +652,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, connexion_stream=False, connexion_statique=True, frozen=frozen)
+    app = App(principal, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.existe:
@@ -634,5 +663,5 @@ if __name__ == "__main__":
     principal.mainloop()
     app.quit()
     principal.quit()
-    logger.info("Fermeture de TwISN")
+    logger.info("Fermeture de Twysn")
     sys.exit()

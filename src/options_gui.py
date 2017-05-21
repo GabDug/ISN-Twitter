@@ -16,7 +16,6 @@ class FenetreOptions(tk.Toplevel):
 
         self.overrideredirect(False)
 
-        # TODO Choisir entre TwISN ou Twyisn
         self.title("Twysn")
 
         frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()

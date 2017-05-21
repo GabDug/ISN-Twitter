@@ -18,7 +18,7 @@ class Log:
     ch.setLevel(logging.DEBUG)
 
     # On crée un "handler" qui va écrire dans un fichier les logs, réécrit à chaque lancement
-    f = logging.FileHandler("twisn.log", mode="w")
+    f = logging.FileHandler("twysn.log", mode="w")
     f.setLevel(logging.DEBUG)
 
     # On définit le format des messages : HEURE [NIVEAU] [fonction in fichier] : message

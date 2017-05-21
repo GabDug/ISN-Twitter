@@ -2,11 +2,13 @@ import os
 import sys
 # noinspection PyUnresolvedReferences
 from multiprocessing import Queue
-
+# noinspection PyUnresolvedReferences
+import requests
 from cx_Freeze import setup, Executable
 
 # Cx_freeze n'importe pas Queue si on ne lui dit pas manuellement. "noinspection" inidque que l'import ne doit pas
-# être supprimé par l'IDE (l'IDE va le supprimer automatiquement puisqu'il ne parait pas utilisé dans ce fichier)
+# être supprimé par l'IDE PyCharm (l'IDE va le supprimer automatiquement puisqu'il ne parait pas
+# utilisé dans ce fichier)
 
 # Ajoute l'argument build pour lancer setup.py normalement au lieu de "python setup.py -build"
 sys.argv.append("build")
@@ -45,7 +47,7 @@ executables = [
 ]
 
 setup(name='Twysn',
-      version='1.0',
+      version='0.9',
       description='Simple client Twitter.',
       options={"build_exe": {"includes": includes, "include_files": include_files}},
       executables=executables
