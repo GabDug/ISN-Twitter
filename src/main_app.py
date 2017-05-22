@@ -203,6 +203,7 @@ class EnvoiTweet(Frame):
         self.tweet_reponse = tweet
 
     def tweeter(self):
+        '''Permet d'appeler la fonction tweeter de ITwython'''
         # On récupère le message depuis le widget d'entrée de label
         message = self.texte_tweet.get("1.0", 'end-1c')
 
@@ -277,12 +278,14 @@ class Sidebar(Frame):
         self.cadre.grid_columnconfigure(0, weight=3)
 
     def clic_options(self):
+        '''Permet d'ouvrir la fenêtre de déconnection'''
         logger.debug("Clic options")
         fenetre_options = options_gui.FenetreOptions(self, self.parent.connexion.user)
         fenetre_options.grab_set()
         principal.wait_window(fenetre_options)
 
     def clic_utilisateur(self):
+        '''Permet de consulter le profil de l'utilisateur connecté'''
         logger.debug("Clic utilisateur")
         fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.parent.connexion.user)
         fenetre_utilisateur.grab_set()
@@ -380,9 +383,10 @@ class TweetGUI(Frame):
         self.bind_class(self.tweet.id, "<Button-1>", lambda __: self.clic_utilisateur())
         self.icone_fav.bind("<Button-1>", lambda __: self.clic_fav())
         self.icone_rt.bind("<Button-1>", lambda __: self.clic_rt())
-        self.icone_reply.bind("<Button-1>", lambda __: self.clic_reply())
+        self.icone_reply.bind("<Button-1>", lambda __: self.clic_reponse())
 
     def clic_fav(self):
+        '''Permet de mettre un Tweet en favori'''
         logger.debug('Clic fav sur tweet (id) : ' + self.id)
         if not self.tweet.favorited:
             logger.debug('Tweet non fav')
@@ -397,46 +401,18 @@ class TweetGUI(Frame):
             self.tweet.favorited = False
 
     def clic_rt(self):
+        '''Permet d'appeler la fonction retweeter après un clic sur le bouton ReTweet'''
         logger.debug('Clic RT sur tweet (id) : ' + self.id)
         # TODO vérifier si le compte est protégé et si on peut RT ou pas
         self.timeline.parent.connexion.retweeter(self.id)
-        # self.icone_rt_on.grid(column=3, row=0, pady=2, padx=30)
 
-    def respond(self):
-        # On récupère le message depuis le widget d'entrée de label
-        message = self.tweet_message.get()
-
-        # Si la connexion est activé (pas debug)
-        if self.connexion_statique:
-            def action_async():
-                logger.debug("Tweet : Début action_async")
-
-                # On désactive l'entrée utilisateur pendant l'envoi du tweet
-                self.tweet.state(["disabled"])
-                self.bouton.state(["disabled"])
-
-                # On lance le tweet via ITwython
-                succes, msg = self.connexion.respond(message)
-
-                logger.debug("Tweet : Succès : " + str(succes))
-                logger.debug("Tweet : Message : " + str(msg))
-
-                # On lance les actions de retour
-                self.callback(succes, msg)
-                logger.debug("Tweet : Fin action_async")
-                return
-
-            # On lance l'action du tweet dans un thread asynchrone
-            th = threading.Thread(target=action_async, daemon=True)
-            th.start()
-
-    def clic_reply(self):
+    def clic_reponse(self):
+        '''Permet d'appeler la fonction mode_reponse après un clic sur le bouton Reply'''
         logger.debug('Clic reply sur tweet (id) : ' + self.id)
-        # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur
-        # self.icone_reply['state'] = "disabled"
         self.timeline.parent.cadre_tweet.mode_reponse(self.tweet)
 
     def clic_utilisateur(self):
+        '''Permet d'ouvrir le profil d'un utilisateur en cliquant sur son Username dans la Timeline'''
         logger.debug('Clic avatar sur tweet (id) : ' + self.id + ", utilisateur : " + self.tweet.user.id)
         fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.tweet.user)
         fenetre_utilisateur.grab_set()

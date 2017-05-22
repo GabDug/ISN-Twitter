@@ -168,7 +168,7 @@ class Connexion(Twython):
             return True, "Fake tweet envoyé !"
 
     def respond(self, message_du_tweet):
-        """Fonction pour envoyer un tweet (status)."""
+        """Fonction pour répondre à un tweet (status)."""
         # Si on n'est pas en debug
         if not self.fake:
             try:
@@ -192,17 +192,6 @@ class Connexion(Twython):
     # On ne peux pas appeler la fonction retweet car une fonction de Twython existe déjà (risque d'override)
     def retweeter(self, id_tweet: str):
         self.retweet(id=id_tweet)
-
-    # TODO finir
-    # def Respond(self, tweet : Tweet):
-    #    #name = Tweet["user"]["screen_name"]
-    #    #text = self.parent.EnvoiTweet()
-    #    msg = input("enter msg here")
-    #    text = " ".join(msg)
-    #    credo = self.update_status(status=text, in_reply_to_status_id=Tweet["id"])
-    #    logger.debug("Tweet envoyé : " + str(credo))
-    #    self._debugrate()
-    #    return True, "Tweet envoyé !"
 
     def reply(self, id_tweet: str):
         # TODO fonction pour ouvrir fenêtre de réponse à 1 utilisateur (On va réutiliser tweeter et pas faire reply)
