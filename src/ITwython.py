@@ -49,7 +49,7 @@ class Tweet:
         # TODO self.date = self.created_at mais en objet date
         self.id = data["id_str"]
         # self.text = data["text"]
-        self.text = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["text"])
+        self.text = re.sub(u'[\u263a-\U0001ffff]+', '\u2610', data["text"])
         # logger.warning(self.text)
         self.user = User(data["user"])
 

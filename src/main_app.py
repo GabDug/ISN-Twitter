@@ -311,7 +311,6 @@ class TweetGUI(Frame):
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
         style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
 
-
         self.cadre_status = Frame(self, width=480, height=120)
         try:
             self.status = tk.Message(self.cadre_status, text=self.tweet.text,
@@ -352,7 +351,7 @@ class TweetGUI(Frame):
 
         self.profile_picture.grid(column=0, row=0, pady=0, rowspan=1, sticky='NW')
 
-        self.name.grid(column=1, row=0, pady=0, sticky='S')
+        self.name.grid(column=1, row=0, pady=0, sticky='SW')
         self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
         self.cadre_status.grid(column=1, row=1, columnspan=2, sticky='NW')
         # self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
