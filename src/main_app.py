@@ -1,3 +1,19 @@
+"""Twython, simple graphical Python Twitter client. 
+Copyright (C) 2017  Quentin ANDRIEUX and Gabriel DUGNY
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+
 # -*- coding: utf-8 -*-
 import os
 import sys
@@ -427,38 +443,39 @@ class ProfilePictureGUI(Frame):
 
         self.lien = tweet.user.profile_image_url_normal
 
-        # TODO Fixer le lien si l'app est frozen
-        # On supprime les : et / de l'url pour en faire un nom de fichier
-        save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
+        if self.lien is not None:
+            # TODO Fixer le lien si l'app est frozen
+            # On supprime les : et / de l'url pour en faire un nom de fichier
+            save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
 
-        # logger.debug("Dossier cache : " + cache_dir)
+            # logger.debug("Dossier cache : " + cache_dir)
 
-        # On crée un string avec le lien absolu vers le fichier
-        self.save = cache_dir + "/" + save_relatif
-        logger.debug("Fichier cache : " + self.save)
+            # On crée un string avec le lien absolu vers le fichier
+            self.save = cache_dir + "/" + save_relatif
+            logger.debug("Fichier cache : " + self.save)
 
-        def action_async():
-            # Si le fichier n'existe pas alors on le télécharge
-            if not os.path.isfile(self.save):
-                logger.debug("Téléchargement du fichier : " + self.save)
-                try:
-                    testfile = urllib.request.URLopener()
-                    testfile.retrieve(self.lien, self.save)
+            def action_async():
+                # Si le fichier n'existe pas alors on le télécharge
+                if not os.path.isfile(self.save):
+                    logger.debug("Téléchargement du fichier : " + self.save)
+                    try:
+                        testfile = urllib.request.URLopener()
+                        testfile.retrieve(self.lien, self.save)
 
-                except urllib.error.HTTPError as e:
-                    logger.error("HTTP Error when downloading pp!" + str(e))
-                    return
+                    except urllib.error.HTTPError as e:
+                        logger.error("HTTP Error when downloading pp!" + str(e))
+                        return
 
-            # TODO Ajouter exception pour ouverture fichier
-            self.pil_image = Image.open(self.save)
-            self.photo = ImageTk.PhotoImage(self.pil_image)
+                # TODO Ajouter exception pour ouverture fichier
+                self.pil_image = Image.open(self.save)
+                self.photo = ImageTk.PhotoImage(self.pil_image)
 
-            label = Label(self, image=self.photo)
-            label.pack(padx=5, pady=5)
-            # self.label.bindtags(tag)
+                label = Label(self, image=self.photo)
+                label.pack(padx=5, pady=5)
+                # self.label.bindtags(tag)
 
-        thread_tl = threading.Thread(target=action_async, daemon=True)
-        thread_tl.start()
+            thread_tl = threading.Thread(target=action_async, daemon=True)
+            thread_tl.start()
 
 
 class TimeLine(Frame):
@@ -589,7 +606,7 @@ if __name__ == "__main__":
     # Mais on utilise un cadre (Objet App qui hérite de Frame)
     # stream_connection et static_connnection sont utilisées pour bloquer les connexions
     # pendant le développement de l'application
-    app = App(principal, connexion_stream=False, frozen=frozen)
+    app = App(principal, frozen=frozen)
 
     # On vérifie que l'application n'a pas été supprimée avec une erreur
     if app.existe:

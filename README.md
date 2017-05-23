@@ -28,6 +28,6 @@ Put the tokens in a file "assets/app_tokens", as explained in the "assets/app_to
 
 ## License
 
-- Twysn is distributed under the GNU AGPL license. Please see LICENSE.md. 
+- Twysn is distributed under the GNU GPL V3.0 license. Please see LICENSE.md. 
 - mttkinter is distributed under the GNU LGPL license.
 - TWITTER, TWEET, RETWEET and the Twitter logo are trademarks of Twitter, Inc. or its affiliates.

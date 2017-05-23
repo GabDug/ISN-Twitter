@@ -47,7 +47,7 @@ executables = [
 ]
 
 setup(name='Twysn',
-      version='0.9',
+      version='1.0',
       description='Simple client Twitter.',
       options={"build_exe": {"includes": includes, "include_files": include_files}},
       executables=executables

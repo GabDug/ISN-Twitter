@@ -22,7 +22,7 @@ secret
 passwords.*
 
 # tests
-src/test.py
+src_print/test.py
 tests.py
 test*.py
 # PyCharm (IDEA)

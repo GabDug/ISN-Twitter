@@ -23,38 +23,38 @@ class ProfilePictureGUI(Frame):
 
         self.lien = user.profile_image_url
 
+        if self.lien is not None:
+            # On supprime les : et / de l'url pour en faire un nom de fichier
+            save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
+            # On obtient le répertoire de sauvegarde des photos
+            cache_dir = path_finder.PathFinder.get_cache_directory()
+            # logger.debug("Dossier cache : " + cache_dir)
 
-        # On supprime les : et / de l'url pour en faire un nom de fichier
-        save_relatif = self.lien.replace("http://", "").replace("https://", "").replace(":", "").replace("/", ".")
-        # On obtient le répertoire de sauvegarde des photos
-        cache_dir = path_finder.PathFinder.get_cache_directory()
-        # logger.debug("Dossier cache : " + cache_dir)
+            # On crée un string avec le lien absolu vers le fichier
+            self.save = cache_dir + "/" + save_relatif
+            logger.debug("Fichier cache : " + self.save)
 
-        # On crée un string avec le lien absolu vers le fichier
-        self.save = cache_dir + "/" + save_relatif
-        logger.debug("Fichier cache : " + self.save)
+            def action_async():
+                # Si le fichier n'existe pas alors on le télécharge
+                if not os.path.isfile(self.save):
+                    logger.debug("Téléchargement du fichier : " + self.save)
+                    try:
+                        testfile = urllib.request.URLopener()
+                        testfile.retrieve(self.lien, self.save)
+                    except urllib.error.HTTPError as e:
+                        logger.error("HTTP ERROR PROFILE PICTURE !" + str(e))
+                        return
 
-        def action_async():
-            # Si le fichier n'existe pas alors on le télécharge
-            if not os.path.isfile(self.save):
-                logger.debug("Téléchargement du fichier : " + self.save)
-                try:
-                    testfile = urllib.request.URLopener()
-                    testfile.retrieve(self.lien, self.save)
-                except urllib.error.HTTPError as e:
-                    logger.error("HTTP ERROR PROFILE PICTURE !" + str(e))
-                    return
+                # TODO Ajouter exception pour ouverture fichier
+                self.pil_image = Image.open(self.save)
+                self.pil_image.thumbnail((100, 100))
+                self.photo = ImageTk.PhotoImage(self.pil_image)
 
-            # TODO Ajouter exception pour ouverture fichier
-            self.pil_image = Image.open(self.save)
-            self.pil_image.thumbnail((100, 100))
-            self.photo = ImageTk.PhotoImage(self.pil_image)
+                label = Label(self, image=self.photo)
+                label.pack(padx=5, pady=5)
 
-            label = Label(self, image=self.photo)
-            label.pack(padx=5, pady=5)
-
-        thread_tl = threading.Thread(target=action_async, daemon=True)
-        thread_tl.start()
+            thread_tl = threading.Thread(target=action_async, daemon=True)
+            thread_tl.start()
 
 
 class FenetreUtilisateur(tk.Toplevel):

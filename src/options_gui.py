@@ -44,6 +44,7 @@ class FenetreOptions(tk.Toplevel):
         message_cache = Label(cadre, text="Supprimer les données en cache.")
         separateur_cache = Label(cadre, text="")
         bouton_cache = Button(cadre, text="Supprimer")
+        bouton_cache.state(["disabled"])
 
         message_deconnexion = Label(cadre, text="Connecté au compte {0}".format(nom_at))
         bouton_deconnexion = Button(cadre, command=self.deconnexionquitter, text="Se déconnecter et quitter")

@@ -98,7 +98,7 @@ class ConnexionTemporaire:
             logger.debug("Final Step :" + str(final_step_dic))
             return True, final_step_dic
         except TwythonError as e:
-            logger.debug("Erreur Twython : " + e)
+            logger.debug("Erreur Twython : " + str(e))
             return False, str(e)
 
 
