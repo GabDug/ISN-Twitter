@@ -24,8 +24,11 @@ class User:
         self.screen_name = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["screen_name"]).encode("utf-8").decode('utf-8')
 
         self.description = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["description"]).encode("utf-8").decode('utf-8')
-        self.location = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["location"]).encode("utf-8").decode('utf-8')
-
+        try:
+            self.location = re.sub(u'[\u263a-\U0001f645]', '\u2610', data["location"]).encode("utf-8").decode('utf-8')
+        except TypeError as e:
+            logger.error(e)
+            self.location = ""
         self.profile_image_url_normal = data["profile_image_url"]
         self.profile_image_url = self.profile_image_url_normal.replace("_normal", "")
 
@@ -65,7 +68,6 @@ class Tweet:
         except AttributeError as e:
             self.urls = None
             logger.error(e)
-
 
 
 # Connections

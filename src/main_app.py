@@ -424,7 +424,7 @@ class TweetGUI(Frame):
         separateur.grid(column=0, row=6, pady=4, columnspan=5)
 
         self.name.grid(column=1, row=0, pady=0, sticky='SW')
-        self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
+        self.screen_name.grid(column=2, row=0, sticky='SE', pady=0)
         self.cadre_status.grid(column=1, row=1, columnspan=2, sticky='NW')
         # self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
         self.status.grid(column=0, row=0)
@@ -455,7 +455,7 @@ class TweetGUI(Frame):
         self.icone_reply.bind("<Button-1>", lambda __: self.clic_reponse())
 
     def clic_fav(self):
-        '''Permet de mettre un Tweet en favori'''
+        """Permet de mettre un Tweet en favori"""
         logger.debug('Clic fav sur tweet (id) : ' + self.id)
         if not self.tweet.favorited:
             logger.debug('Tweet non fav')
@@ -470,18 +470,18 @@ class TweetGUI(Frame):
             self.tweet.favorited = False
 
     def clic_rt(self):
-        '''Permet d'appeler la fonction retweeter après un clic sur le bouton ReTweet'''
+        """Permet d'appeler la fonction retweeter après un clic sur le bouton ReTweet"""
         logger.debug('Clic RT sur tweet (id) : ' + self.id)
         # TODO vérifier si le compte est protégé et si on peut RT ou pas
         self.timeline.parent.connexion.retweeter(self.id)
 
     def clic_reponse(self):
-        '''Permet d'appeler la fonction mode_reponse après un clic sur le bouton Reply'''
+        """Permet d'appeler la fonction mode_reponse après un clic sur le bouton Reply"""
         logger.debug('Clic reply sur tweet (id) : ' + self.id)
         self.timeline.parent.cadre_tweet.mode_reponse(self.tweet)
 
     def clic_utilisateur(self):
-        '''Permet d'ouvrir le profil d'un utilisateur en cliquant sur son Username dans la Timeline'''
+        """Permet d'ouvrir le profil d'un utilisateur en cliquant sur son Username dans la Timeline"""
         logger.debug('Clic avatar sur tweet (id) : ' + self.id + ", utilisateur : " + self.tweet.user.id)
         fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.tweet.user)
         fenetre_utilisateur.grab_set()
