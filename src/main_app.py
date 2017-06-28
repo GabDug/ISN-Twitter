@@ -31,12 +31,10 @@ import requests
 from PIL import Image, ImageTk
 
 import ITwython
-import auth_gui
+import auth_gui, aide_gui, user_gui, options_gui
 import logger_conf
-import options_gui
 import path_finder
 import token_manager
-import user_gui
 from ITwython import Tweet
 
 try:
@@ -333,7 +331,7 @@ class Sidebar(Frame):
     def clic_aide(self):
         """Permet d'ouvrir la fenêtre d'aide."""
         logger.debug("Clic aide")
-        fenetre_aide = options_gui.FenetreOptions(self, self.parent.connexion.user)
+        fenetre_aide = aide_gui.FenetreAide(self)
         fenetre_aide.grab_set()
         principal.wait_window(fenetre_aide)
 
@@ -358,7 +356,7 @@ class TweetGUI(Frame):
         style.configure("Name.TLabel", foreground="white", background="#343232", font=('Segoe UI', 14))
         style.configure("Date.TLabel", foreground="#cccccc", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
-        style.configure("Separateur.TFrame", foreground="white", background="white", font=('Segoe UI', 10))
+        style.configure("Separateur.TFrame", foreground="#cccccc", background="white", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
 
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
