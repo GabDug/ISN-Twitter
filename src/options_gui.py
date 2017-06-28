@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter.ttk import *
 
@@ -15,7 +16,8 @@ class FenetreOptions(tk.Toplevel):
         self.parent = parent
 
         self.overrideredirect(False)
-
+        self.config(bg='#343232')
+        self.minsize(width=600, height=250)
         self.title("Twysn")
 
         frozen, chemin_absolu = path_finder.PathFinder.get_icon_path()
@@ -43,8 +45,7 @@ class FenetreOptions(tk.Toplevel):
 
         message_cache = Label(cadre, text="Supprimer les données en cache.")
         separateur_cache = Label(cadre, text="")
-        bouton_cache = Button(cadre, text="Supprimer")
-        bouton_cache.state(["disabled"])
+        bouton_cache = Button(cadre, text="Supprimer", command=FenetreOptions.supprimer_cache())
 
         message_deconnexion = Label(cadre, text="Connecté au compte {0}".format(nom_at))
         bouton_deconnexion = Button(cadre, command=self.deconnexionquitter, text="Se déconnecter et quitter")
@@ -60,12 +61,23 @@ class FenetreOptions(tk.Toplevel):
 
     def deconnexionquitter(self):
         try:
-            delete_tokens()
+            delete_tokens()  # de token_manager
             self.parent.parent.parent.quit()  # (Principal dans main_app)
             self.destroy()
         except:
             logger.error("Impossible de quitter.")
             pass
+
+    @staticmethod
+    def supprimer_cache():
+        repertoire = path_finder.PathFinder.get_cache_directory()
+        for fichier in os.listdir(repertoire):
+            chemin_fichier = os.path.join(repertoire, fichier)
+            try:
+                if os.path.isfile(chemin_fichier):
+                    os.unlink(chemin_fichier)
+            except Exception as e:
+                logger.error('Impossible de supprimer le cache ! ' + e)
 
 
 # Permet d'éxécuter le code uniquement si lancé
