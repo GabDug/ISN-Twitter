@@ -287,25 +287,36 @@ class Sidebar(Frame):
         self.icone_option = Label(self.cadre, anchor=tk.S, text=chr(int("E115", 16)), font=('Segoe MDL2 Assets', 20),
                                   style="Sidebar.TLabel")
         self.icone_option.bind("<Button-1>", lambda __: self.clic_options())
+        self.icone_aide = Label(self.cadre, anchor=tk.S, text=chr(int("E897", 16)), font=('Segoe MDL2 Assets', 20),
+                                style="Sidebar.TLabel")
+        self.icone_aide.bind("<Button-1>", lambda __: self.clic_aide())
 
-        self.icone_utilisateur.grid(row=0, column=0, sticky="s", ipady=20)
-        self.icone_option.grid(row=1, column=0, sticky="s")
+        self.icone_utilisateur.grid(row=0, column=0, sticky="s")
+        self.icone_option.grid(row=1, column=0, sticky="s", ipady=10)
+        self.icone_aide.grid(row=2, column=0, sticky="s", ipady=10)
 
         self.cadre.grid_columnconfigure(0, weight=3)
 
     def clic_options(self):
-        '''Permet d'ouvrir la fenêtre de déconnection'''
+        """Permet d'ouvrir la fenêtre de déconnection"""
         logger.debug("Clic options")
         fenetre_options = options_gui.FenetreOptions(self, self.parent.connexion.user)
         fenetre_options.grab_set()
         principal.wait_window(fenetre_options)
 
     def clic_utilisateur(self):
-        '''Permet de consulter le profil de l'utilisateur connecté'''
+        """Permet de consulter le profil de l'utilisateur connecté"""
         logger.debug("Clic utilisateur")
         fenetre_utilisateur = user_gui.FenetreUtilisateur(self, self.parent.connexion.user)
         fenetre_utilisateur.grab_set()
         principal.wait_window(fenetre_utilisateur)
+
+    def clic_aide(self):
+        """Permet d'ouvrir la fenêtre d'aide."""
+        logger.debug("Clic aide")
+        fenetre_aide = options_gui.FenetreOptions(self, self.parent.connexion.user)
+        fenetre_aide.grab_set()
+        principal.wait_window(fenetre_aide)
 
 
 class TweetGUI(Frame):
