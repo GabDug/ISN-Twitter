@@ -212,14 +212,33 @@ class EnvoiTweet(Frame):
         self.bouton.grid(column=0, row=2, pady=10)
         self.message.grid(column=0, row=3)
 
+        self.cadre_reponse = Frame(self.cadre)
+        self.cadre_reponse.grid(column=0, row=4)
+        self.cadre_reponse.grid_forget()
+        self.pseudo_reponse = tk.StringVar("")
+        self.label_reponse = Label(self.cadre_reponse, textvariable=self.pseudo_reponse)
+        self.icone_fermer_reponse = Label(self.cadre_reponse, text=chr(int("E711", 16)), font=('Segoe MDL2 Assets', 10))
+
+        self.icone_fermer_reponse.bind("<Button-1>", lambda __: self.mode_reponse_off())
+        self.label_reponse.grid(column=0, row=0)
+        self.icone_fermer_reponse.grid(column=1, row=0)
+
     def mode_reponse(self, tweet: Tweet):
-        self.labelreponse = Label(self.cadre, text="Répondre à @" + tweet.user.screen_name)
-        self.labelreponse.grid(column=0, row=4)
+        """Affiche un cadre montrant à qui on répond et permet de répondre à un tweet."""
+        self.cadre_reponse.grid(column=0, row=4)
+        self.pseudo_reponse.set("Répondre à @" + tweet.user.screen_name)
+
         self.id_reponse = tweet.id
         self.tweet_reponse = tweet
 
+    def mode_reponse_off(self):
+        """Cache le cadre de réponse à un tweet et supprime le mode réponse (repasse en mode tweet normal)."""
+        self.cadre_reponse.grid_forget()
+        self.id_reponse = None
+        self.tweet_reponse = None
+
     def tweeter(self):
-        '''Permet d'appeler la fonction tweeter de ITwython'''
+        """Permet d'appeler la fonction tweeter de ITwython"""
         # On récupère le message depuis le widget d'entrée de label
         message = self.texte_tweet.get("1.0", 'end-1c')
 
@@ -330,10 +349,14 @@ class TweetGUI(Frame):
         self.tweet = tweet
         self.id = tweet.id
 
+        self.cadre = Frame(self)
+        self.cadre.grid(column=0, row=0, pady=5, padx=5)
+
         style = Style()
         style.configure("Test.TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("TLabel", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("Name.TLabel", foreground="white", background="#343232", font=('Segoe UI', 14))
+        style.configure("Date.TLabel", foreground="#cccccc", background="#343232", font=('Segoe UI', 10))
         style.configure("TFrame", foreground="white", background="#343232", font=('Segoe UI', 10))
         style.configure("Separateur.TFrame", foreground="white", background="white", font=('Segoe UI', 10))
         style.configure("TButton", font=('Segoe UI', 10))
@@ -341,29 +364,47 @@ class TweetGUI(Frame):
         style.configure("Sidebar.TFrame", foreground="white", background="#111111", font=('Segoe UI', 10))
         style.configure("Sidebar.TLabel", foreground="white", background="#111111", font=('Segoe UI', 10))
 
-        self.cadre_status = Frame(self, width=480, height=120)
+        self.cadre_status = Frame(self.cadre, width=480, height=120)
         try:
-            self.status = tk.Message(self.cadre_status, text=self.tweet.text,
-                                     width=450, foreground="white", background="#343232",
-                                     font=('Segoe UI', 10))
+            # self.status = tk.Message(self.cadre_status, text=self.tweet.text,
+            #                          width=450, foreground="white", background="#343232",
+            #                          font=('Segoe UI', 10))
+            self.status = tk.Text(self.cadre_status, bd="0",
+                                  width=50, wrap="word",
+                                  height=3, foreground="white", background="#343232",
+                                  font=('Segoe UI', 10))
         except tk.TclError as e:
             logger.error(str(e))
-            self.status = tk.Message(self.cadre_status, text=self.tweet.text.encode("utf-8"),
-                                     width=450, foreground="white", background="#343232",
-                                     font=('Segoe UI', 10))
-        self.screen_name = Label(self, text="@" + self.tweet.user.screen_name, style="TLabel")
+            # self.status = tk.Message(self.cadre_status, text=self.tweet.text.encode("utf-8"),
+            #                          width=450, foreground="white", background="#343232",
+            #                          font=('Segoe UI', 10))
+            self.status = tk.Text(self.cadre_status, bd="0",
+                                  width=50, wrap="word",
+                                  height=3, foreground="white", background="#343232",
+                                  font=('Segoe UI', 10))
+
+        self.status.insert("1.0", self.tweet.text)
+
+        # TODO Rendre les liens cliquables
+        # if self.tweet.urls is not None:
+        #     url0 = self.tweet.urls[0]
+        #     print(url0)
+        #     lien1 = url0["indices"][0]
+        #     if lien1 != 0:
+        #         self.status.insert("1.0", self.tweet.text[0:lien1])
+        #     for url_objet in self.urls:
+
+        self.screen_name = Label(self.cadre, text="@" + self.tweet.user.screen_name, style="TLabel")
         try:
-            self.name = Label(self, text=self.tweet.user.name, style="Name.TLabel")
-        except tk.TclError as e:
-            self.name = Label(self, text=self.tweet.user.name.encode("utf-8"), style="Name.TLabel")
-        self.date = Label(self, text=self.tweet.date)
+            self.name = Label(self.cadre, text=self.tweet.user.name, style="Name.TLabel")
+        except tk.TclError:
+            self.name = Label(self.cadre, text=self.tweet.user.name.encode("utf-8"), style="Name.TLabel")
+        self.date = Label(self.cadre, text=self.tweet.date, style="Date.TLabel")
 
-        separateur = Frame(self, width=580, height=2, style='Separateur.TFrame')
-        separateur.grid(column=0, row=6, pady=4, columnspan=5)
+        self.profile_picture = ProfilePictureGUI(self.cadre, self.tweet, cache_dir=self.timeline.cache_dir,
+                                                 tag=self.tweet.id)
 
-        self.profile_picture = ProfilePictureGUI(self, self.tweet, cache_dir=self.timeline.cache_dir, tag=self.tweet.id)
-
-        cadre_actions = Frame(self, width=580, height=50, style="TLabel")
+        cadre_actions = Frame(self.cadre, width=580, height=50, style="TLabel")
 
         self.fav_variable = tk.StringVar()
         if not tweet.favorited:
@@ -379,14 +420,17 @@ class TweetGUI(Frame):
         self.icone_reply = Label(cadre_actions, text=chr(int("E15F", 16)), font=('Segoe MDL2 Assets', 14),
                                  style="TLabel")
 
-        self.profile_picture.grid(column=0, row=0, pady=0, rowspan=1, sticky='NW')
+        self.profile_picture.grid(column=0, row=0, pady=0, rowspan=2, sticky='NW')
+
+        separateur = Frame(self, width=580, height=2, style='Separateur.TFrame')
+        separateur.grid(column=0, row=6, pady=4, columnspan=5)
 
         self.name.grid(column=1, row=0, pady=0, sticky='SW')
         self.screen_name.grid(column=2, row=0, sticky='S', pady=0)
         self.cadre_status.grid(column=1, row=1, columnspan=2, sticky='NW')
         # self.status.grid(column=1, row=1, columnspan=2, sticky='NW')
         self.status.grid(column=0, row=0)
-        self.date.grid(column=0, columnspan=2, row=3, pady=0, sticky='W')
+        self.date.grid(column=1, columnspan=1, row=3, pady=0, sticky='W')
 
         cadre_actions.grid(column=2, row=3, columnspan=1, padx=0, pady=0, sticky='E')
 
@@ -516,13 +560,14 @@ class TimeLine(Frame):
         self.canvas.grid(column=0, row=0, sticky="nesw")
         self.canvas.create_window((0, 0), window=self.frame,
                                   tags="self.frame")
-
+        self.canvas.bind_all("<MouseWheel>", self.scroll_cadre)
         self.frame.bind("<Configure>", self.config_cadre)
 
         self.ligne = 0
 
         if static_connection:
             tweets_data = self.parent.connexion.get_home_timeline(count=25)
+            print(tweets_data)
             # Example de réponse dans dev_assets/list_tweets
             for tweet in reversed(tweets_data):
                 self.add_data(tweet)
@@ -591,6 +636,10 @@ class TimeLine(Frame):
         # height = event.height - 4
         # self.canvas.itemconfigure("self.frame", height=height)
 
+    def scroll_cadre(self, event):
+        print(event.delta)
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
 
 # On commence le code ici
 if __name__ == "__main__":
@@ -601,7 +650,7 @@ if __name__ == "__main__":
     principal.title("Twysn")
     principal.config(bg='#343232')
     principal.minsize(width=850, height=400)
-    principal.call('tk', 'scaling', 2.0)
+    # principal.call('tk', 'scaling', 2.0)
 
     principal.columnconfigure(0, weight=1)
     principal.rowconfigure(0, weight=1)

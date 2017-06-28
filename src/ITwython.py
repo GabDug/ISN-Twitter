@@ -58,6 +58,14 @@ class Tweet:
 
         self.retweet_count = data["retweet_count"]
         self.favorite_count = data["favorite_count"]
+        try:
+            self.urls = data["entities"]["urls"]
+            if not self.urls:
+                self.urls = None
+        except AttributeError as e:
+            self.urls = None
+            logger.error(e)
+
 
 
 # Connections
